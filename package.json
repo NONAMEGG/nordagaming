@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@ion-phaser/core": "^1.3.0",
-    "phaser": "^3.88.2"
-  }
-}
