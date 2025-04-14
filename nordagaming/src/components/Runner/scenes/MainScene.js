@@ -1,105 +1,205 @@
 import Player from '@/components/Runner/objects/Player';
 import Enemy from '@/components/Runner/objects/Enemy';
+import GroundManager from '../objects/GroundManager';
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
+        this.groundTiles = []; 
+        this.backgrounds = []; 
     }
 
     init() {
         this.score = 0;
-        this.gameSpeed = 5;
+        this.gameSpeed = 4;
+        this.gameMaxSpeed = 6.5;
         this.enemies = this.add.group();
     }
 
     create() {
         this.soundManager = this.scene.get('BootScene').soundManager;
 
-        // 1. Фон
-        this.bg = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'background')
-            .setOrigin(0, 0)
-            .setScrollFactor(0);
-    
-        // 2. Пол - создаем как физический спрайт
-        this.ground = this.physics.add.staticSprite(
-            this.cameras.main.width / 2, 
-            this.cameras.main.height - 25, 
-            'ground'
-        );
-        this.ground.setDisplaySize(this.cameras.main.width * 2, 50);
+        this.physics.world.createDebugGraphic();
+        this.physics.world.drawDebug = true;
+
+        this.createBackground();
+
+        this.groundManager = new GroundManager(this);
         
-        // 3. Игрок
-        this.player = new Player(this, 100, this.cameras.main.height - 150);
+
+        this.anims.create({
+            key: 'run',
+            frames: [
+                { key: 'player_frame1' },
+                { key: 'player_frame2' },
+                { key: 'player_frame3' },
+                { key: 'player_frame4' }
+            ],
+            frameRate: 10,
+            repeat: -1
+        });
+        // this.createGround();
+        
+        //Игрок
+        this.player = new Player(this, 100, this.cameras.main.height - 150).setDepth(10);
     
-        // 4. Группа врагов
-        this.enemies = this.physics.add.group();
+        //Группа врагов
+        this.enemies = this.physics.add.group().setDepth(5);
     
-        // 5. Коллайдеры
-        this.physics.add.collider(this.player, this.ground);
-        this.physics.add.collider(this.enemies, this.ground);
-        this.physics.add.overlap(this.player, this.enemies, this.handleCollision, null, this);
-    
-        // 6. Таймер спавна
+        this.spawnEnemy(); // Первый спавн сразу
         this.spawnTimer = this.time.addEvent({
-            delay: 2000,
+            delay: 2000,       // Начальная задержка
             callback: this.spawnEnemy,
             callbackScope: this,
             loop: true
-        });
-    }
-
-    createGround() {
-        this.ground = this.add.rectangle(
-            0, 
-            this.sys.game.config.height - 50, 
-            this.sys.game.config.width * 2, 
-            100, 
-            0x666666
-        ).setOrigin(0, 0);
-        this.physics.add.existing(this.ground, true);
-    }
-
-    spawnEnemy() {
-        // Спавним врагов точно на уровне пола
-        const enemy = new Enemy(
-            this,
-            this.cameras.main.width + 100,
-            this.cameras.main.height - 100, // Фиксированная позиция по Y
-            this.enemies
-        );
-        
-        // Настраиваем физику
-        enemy.body.setAllowGravity(false); // Отключаем гравитацию для врагов
-        enemy.body.setImmovable(true);
+        }); 
+    
+        this.setupCollisions();
     }
 
     setupCollisions() {
-        this.physics.add.collider(this.player, this.ground);
-        this.physics.add.overlap(
+        // Удаляем старые коллайдеры
+        if (this.playerGroundCollider) {
+            this.physics.world.removeCollider(this.playerGroundCollider);
+        }
+    
+        // Создаем новые коллайдеры
+        this.playerGroundCollider = this.physics.add.collider(
+            this.player,
+            this.groundManager.getCollisionGroup(),
+            null, null, this
+        );
+
+        if (this.playerEnemyCollider) {
+            this.physics.world.removeCollider(this.playerEnemyCollider);
+        }
+
+        // Создаем коллайдер между игроком и врагами
+        this.playerEnemyCollider = this.physics.add.overlap(
             this.player,
             this.enemies,
-            this.handleCollision,
+            this.handlePlayerEnemyCollision,
             null,
             this
         );
+    
+        // Коллайдер для врагов
+        this.physics.add.collider(
+            this.enemies,
+            this.groundManager.getCollisionGroup()
+        );
     }
 
-    handleCollision() {
-        const currentScore = Math.floor(this.score);
-        this.soundManager.pauseMusic();
+    createBackground() {
+        // Создаем 3 фона для плавного перехода
+        this.backgrounds = [];
+        const bgWidth = this.textures.get('background').getSourceImage().width;
+        
+        for (let i = 0; i < 3; i++) {
+            const bg = this.add.image(bgWidth * i, 0, 'background')
+                .setOrigin(0, 0)
+                .setScrollFactor(0)
+                .setDepth(0);
+            this.backgrounds.push(bg);
+        }
+    }
+    
+    moveBackground() {
+        const speed = this.gameSpeed * 2;
+        const bgWidth = this.backgrounds[0].width;
+    
+        this.backgrounds.forEach(bg => {
+            bg.x -= speed * 0.2;
+            
+            // Если фон ушел за экран - перемещаем его в конец цепочки
+            if (bg.x <= -bgWidth) {
+                const lastBg = this.backgrounds.reduce((prev, current) => 
+                    (current.x > prev.x) ? current : prev
+                );
+                bg.x = lastBg.x + bgWidth;
+            }
+        });
+    }
+
+    spawnEnemy() {
+        // Проверка расстояния до последнего врага
+        const lastEnemy = this.getLastEnemy();
+        const minDistanceBetweenWaves = 500; // Минимальное расстояние между волнами
+        const minDistanceInGroup = 150;      // Минимальное расстояние в группе
+        const maxDistanceInGroup = 200;      // Максимальное расстояние в группе
+        
+        // Если последний враг ещё слишком близко, откладываем спавн
+        if (lastEnemy && lastEnemy.x > this.cameras.main.width - minDistanceBetweenWaves) {
+            this.time.delayedCall(300, this.spawnEnemy, [], this);
+            return;
+        }
+    
+        const random = Phaser.Math.Between(1, 100);
+        let enemyCount = random <= 60 ? 1 : 2;
+    
+        // Позиция Y
+        const groundY = this.cameras.main.height - 200;
+        
+        // Спавн группы врагов с контролем расстояния
+        let prevX = this.cameras.main.width + 100; 
+        
+        for (let i = 0; i < enemyCount; i++) {
+            // Вычисляем расстояние до следующего врага в группе
+            const distance = Phaser.Math.Between(minDistanceInGroup, maxDistanceInGroup);
+            const x = prevX + distance;
+            
+            new Enemy(this, x, groundY, this.enemies);
+            prevX = x; // Запоминаем позицию для следующего врага
+        }
+    
+        // Интервал до следующего спавна (2-4 сек, зависит от скорости)
+        const baseDelay = Phaser.Math.Between(2000, 4000);
+        const scaledDelay = baseDelay / Math.max(1, this.gameSpeed / 5);
+        
+        this.time.delayedCall(scaledDelay, this.spawnEnemy, [], this);
+    }
+    
+    getLastEnemy() {
+        let lastEnemy = null;
+        this.enemies.getChildren().forEach(enemy => {
+            if (!lastEnemy || enemy.x > lastEnemy.x) {
+                lastEnemy = enemy;
+            }
+        });
+        return lastEnemy;
+    }
+
+    handlePlayerEnemyCollision(player, enemy) {
+        // 1. Останавливаем физику
+        this.physics.pause();
+        
+        // 2. Деактивируем игрока
+        player.setActive(false).setVisible(false);
+        
+        // 3. Останавливаем все таймеры
+        this.time.removeAllEvents();
+        
+        // 4. Запускаем сцену GameOver
         this.scene.launch('GameOverScene', { 
-            score: currentScore
-        })
+            score: Math.floor(this.score) 
+        });
+        
+        // 5. Приостанавливаем текущую сцену
         this.scene.pause();
+        
+        console.log('Game should stop now!'); // Для отладки
     }
 
     update(time, delta) {
+        this.moveBackground();
+        this.groundManager.update(this.gameSpeed * 1.5);
+
+        this.physics.world.collide(this.player, this.enemies);
+                
         this.player.update();
         this.enemies.getChildren().forEach(enemy => enemy.update(this.gameSpeed));
-        this.incrementScore();
         
-        // Увеличиваем сложность со временем
-        this.gameSpeed += 0.0005;
+        this.incrementScore();
     }
 
     incrementScore() {

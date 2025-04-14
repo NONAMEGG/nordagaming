@@ -1,8 +1,17 @@
 // scenes/BootScene.js
-import backgroundImage from '@/components/Runner/assets/images/background.jpg';
-import playerImage from '@/components/Runner/assets/images/player.png';
+import backgroundImage from '@/components/Runner/assets/images/background2.jpg';
+// import playerImage from '@/components/Runner/assets/images/player.png';
 import enemyImage from '@/components/Runner/assets/images/enemy.png';
 import gameMusic from '@/components/Runner/assets/sounds/plaing_song.mp3';
+import grib from '@/components/Runner/assets/images/Grib1.png';
+import grib2 from '@/components/Runner/assets/images/Grib2.png';
+import grib3 from '@/components/Runner/assets/images/Grib3.png';
+import grib4 from '@/components/Runner/assets/images/Grib4.png';
+import floor1 from '@/components/Runner/assets/images/floor1.png'
+import floor2 from '@/components/Runner/assets/images/floor1.png'
+import floor3 from '@/components/Runner/assets/images/floor1.png'
+import floor4 from '@/components/Runner/assets/images/floor1.png'
+import floor5 from '@/components/Runner/assets/images/floor1.png'
 import SoundManager from '../untils/SoundManager';
 
 export default class BootScene extends Phaser.Scene {
@@ -13,8 +22,19 @@ export default class BootScene extends Phaser.Scene {
     preload() {
         // Загрузка изображений
         this.load.image('background', backgroundImage);
-        this.load.image('player', playerImage);
+        // this.load.image('player', playerImage);
         this.load.image('enemy', enemyImage);
+
+        this.load.image('player_frame1', grib);
+        this.load.image('player_frame2', grib2);
+        this.load.image('player_frame3', grib3);
+        this.load.image('player_frame4', grib4);
+
+        this.load.image('floor_frame1', floor1);
+        this.load.image('floor_frame2', floor2);
+        this.load.image('floor_frame3', floor3);
+        this.load.image('floor_frame4', floor4);
+        this.load.image('floor_frame5', floor5);
 
         // Загрузка звука
         this.load.audio('gameMusic', [

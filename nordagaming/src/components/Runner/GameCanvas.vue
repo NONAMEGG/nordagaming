@@ -6,7 +6,7 @@
     import Phaser from 'phaser';
     import BootScene from './scenes/BootScene.js';
     import MainScene from './scenes/MainScene.js';
-    import UiScene from './scenes/UiScene.js';
+    import UiScene from './scenes/UIScene.js';
     import GameOverScene from './scenes/GameOverScene.js';
     
     export default {
@@ -19,8 +19,8 @@
             physics: {
             default: 'arcade',
             arcade: {
-                gravity: { y: 1500 },
-                debug: false,
+                gravity: { y: 2500 },
+                debug: true,
                 fixedStep: true
             }
             },
