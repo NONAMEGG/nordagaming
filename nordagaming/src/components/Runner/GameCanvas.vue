@@ -8,34 +8,35 @@
     import MainScene from './scenes/MainScene.js';
     import UiScene from './scenes/UIScene.js';
     import GameOverScene from './scenes/GameOverScene.js';
+    import VictoryScene from './scenes/VictoryScene.js';
     
     export default {
         mounted() {
-        const config = {
-            type: Phaser.AUTO,
-            parent: this.$refs.gameContainer,
-            width: 2500,
-            height: 700,
-            physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 2500 },
-                debug: true,
-                fixedStep: true
-            }
-            },
-            scene: [BootScene, MainScene, UiScene, GameOverScene]
-        };
-    
-        this.game = new Phaser.Game(config);
+            const config = {
+                type: Phaser.AUTO,
+                parent: this.$refs.gameContainer,
+                width: 2500,
+                height: 700,
+                physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 2500 },
+                    debug: false,
+                    fixedStep: true
+                }
+                },
+                scene: [BootScene, MainScene, UiScene, GameOverScene, VictoryScene]
+            };
+        
+            this.game = new Phaser.Game(config);
         },
         beforeDestroy() {
-        if (this.game) this.game.destroy(true);
+            if (this.game) this.game.destroy(true);
         }
     };
     </script>
     
-    <style scoped>
+<style scoped>
     .game-container {
         position: absolute;
         top: 0;

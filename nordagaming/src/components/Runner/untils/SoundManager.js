@@ -45,7 +45,7 @@ export default class SoundManager {
         if (!this.soundEnabled) return;
         
         const sound = this.scene.sound.add(key, {
-            volume: 0.3,
+            volume: 1,
             ...config
         });
         sound.play();
@@ -60,6 +60,6 @@ export default class SoundManager {
         } else {
             this.playMusic();
         }
-        return this.soundEnabled; // Возвращаем текущее состояние
+        return this.soundEnabled;
     }
 }

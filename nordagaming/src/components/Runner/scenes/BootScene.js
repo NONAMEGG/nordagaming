@@ -3,6 +3,7 @@ import backgroundImage from '@/components/Runner/assets/images/background2.jpg';
 // import playerImage from '@/components/Runner/assets/images/player.png';
 import enemyImage from '@/components/Runner/assets/images/enemy.png';
 import gameMusic from '@/components/Runner/assets/sounds/plaing_song.mp3';
+import PickUpCoinMusic from '@/components/Runner/assets/sounds/coin.mp3';
 import grib from '@/components/Runner/assets/images/Grib1.png';
 import grib2 from '@/components/Runner/assets/images/Grib2.png';
 import grib3 from '@/components/Runner/assets/images/Grib3.png';
@@ -12,6 +13,7 @@ import floor2 from '@/components/Runner/assets/images/floor1.png'
 import floor3 from '@/components/Runner/assets/images/floor1.png'
 import floor4 from '@/components/Runner/assets/images/floor1.png'
 import floor5 from '@/components/Runner/assets/images/floor1.png'
+import coinImage from '@/components/Runner/assets/images/coin.png';
 import SoundManager from '../untils/SoundManager';
 
 export default class BootScene extends Phaser.Scene {
@@ -36,9 +38,15 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('floor_frame4', floor4);
         this.load.image('floor_frame5', floor5);
 
+        this.load.image('coin', coinImage);
+
         // Загрузка звука
         this.load.audio('gameMusic', [
             gameMusic
+        ]);
+
+        this.load.audio('PickUpCoinMusic', [
+            PickUpCoinMusic
         ]);
 
         // Прогресс-бар для визуализации загрузки

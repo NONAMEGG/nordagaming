@@ -1,6 +1,7 @@
 import Player from '@/components/Runner/objects/Player';
 import Enemy from '@/components/Runner/objects/Enemy';
 import GroundManager from '../objects/GroundManager';
+import Coin from '../objects/Coins';
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
@@ -14,13 +15,17 @@ export default class MainScene extends Phaser.Scene {
         this.gameSpeed = 4;
         this.gameMaxSpeed = 6.5;
         this.enemies = this.add.group();
+        this.coinsCollected = 0;
+        this.nextCoinThreshold = 1;
+        this.nextCoinThrough = 1;
+        this.WINgame = 10;
     }
 
     create() {
         this.soundManager = this.scene.get('BootScene').soundManager;
 
         this.physics.world.createDebugGraphic();
-        this.physics.world.drawDebug = true;
+        this.physics.world.drawDebug = false;
 
         this.createBackground();
 
@@ -52,10 +57,57 @@ export default class MainScene extends Phaser.Scene {
             callback: this.spawnEnemy,
             callbackScope: this,
             loop: true
-        }); 
-    
+        });
+
+
+        this.coinGroup = this.physics.add.group({
+            allowGravity: false, 
+            immovable: true
+        }).setDepth(5);
+        
+        
         this.setupCollisions();
     }
+
+    update(time, delta) {
+        this.moveBackground();
+        this.groundManager.update(this.gameSpeed * 1.5);
+
+        this.physics.world.collide(this.player, this.enemies);
+                
+        this.player.update();
+        this.enemies.getChildren().forEach(enemy => enemy.update(this.gameSpeed));
+
+        this.spawnCoinIfNeeded();
+        this.coinGroup.getChildren().forEach(coin => coin.update(this.gameSpeed));
+        
+        this.incrementScore();
+    }
+
+    handlePlayerCoinCollision(player, coin) {
+        coin.destroy();
+        this.coinsCollected++;
+        this.soundManager.playSound('PickUpCoinMusic'); 
+        
+        if (this.coinsCollected >= this.WINgame) {
+            this.scene.start('VictoryScene', { coins: this.coinsCollected });
+            this.scene.pause();
+        }
+    }
+
+    spawnCoinIfNeeded() {
+        if (this.score >= this.nextCoinThreshold) {
+            this.spawnCoin();
+            this.nextCoinThreshold += this.nextCoinThrough; 
+        }
+    }
+
+    spawnCoin() {
+        const x = this.cameras.main.width + Phaser.Math.Between(200, 400);
+        const y = this.cameras.main.height - 250; // Позиция над землей
+        new Coin(this, x, y, this.coinGroup);
+    }
+
 
     setupCollisions() {
         // Удаляем старые коллайдеры
@@ -87,6 +139,15 @@ export default class MainScene extends Phaser.Scene {
         this.physics.add.collider(
             this.enemies,
             this.groundManager.getCollisionGroup()
+        );
+
+        // Коллайдер монет с игроком 
+        this.physics.add.overlap(
+            this.player,
+            this.coinGroup,
+            this.handlePlayerCoinCollision,
+            null,
+            this
         );
     }
 
@@ -170,36 +231,18 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handlePlayerEnemyCollision(player, enemy) {
-        // 1. Останавливаем физику
         this.physics.pause();
         
-        // 2. Деактивируем игрока
         player.setActive(false).setVisible(false);
         
-        // 3. Останавливаем все таймеры
         this.time.removeAllEvents();
         
-        // 4. Запускаем сцену GameOver
         this.scene.launch('GameOverScene', { 
             score: Math.floor(this.score) 
         });
         
-        // 5. Приостанавливаем текущую сцену
         this.scene.pause();
         
-        console.log('Game should stop now!'); // Для отладки
-    }
-
-    update(time, delta) {
-        this.moveBackground();
-        this.groundManager.update(this.gameSpeed * 1.5);
-
-        this.physics.world.collide(this.player, this.enemies);
-                
-        this.player.update();
-        this.enemies.getChildren().forEach(enemy => enemy.update(this.gameSpeed));
-        
-        this.incrementScore();
     }
 
     incrementScore() {
