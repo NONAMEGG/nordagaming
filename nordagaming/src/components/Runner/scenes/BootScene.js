@@ -14,15 +14,48 @@ import floor3 from '@/components/Runner/assets/images/floor1.png'
 import floor4 from '@/components/Runner/assets/images/floor1.png'
 import floor5 from '@/components/Runner/assets/images/floor1.png'
 import coinImage from '@/components/Runner/assets/images/coin.png';
-import SoundManager from '../untils/SoundManager';
+import SoundManager from '../untils/SoundManager.js';
+
+import ImageService from '../untils/ImageService.js';
 
 export default class BootScene extends Phaser.Scene {
     constructor() {
         super({ key: 'BootScene' });
     }
+
+    async loadCoinSkins() {
+        try {
+            const images = await ImageService.fetchCoinImages();
+            const skins = await Promise.all(images.map(async img => {
+                const response = await fetch(img.url);
+                const blob = await response.blob();
+                return new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({
+                        id: img.id,
+                        data: reader.result
+                    });
+                    reader.readAsDataURL(blob);
+                });
+            }));
+            
+            localStorage.setItem('coinSkins', JSON.stringify(skins));
+        } catch (error) {
+            console.error('Failed to load coin skins:', error);
+        }
+    }
   
-    preload() {
-        // Загрузка изображений
+    async preload() {
+        this.load.audio('gameMusic', [gameMusic]);
+        this.load.audio('PickUpCoinMusic', [PickUpCoinMusic]);
+
+        await this.loadCoinSkins();
+
+        const savedSkins = JSON.parse(localStorage.getItem('coinSkins')) || [];
+        savedSkins.forEach(skin => {
+            this.textures.addBase64(`coin_${skin.id}`, skin.data);
+        });
+
         this.load.image('background', backgroundImage);
         // this.load.image('player', playerImage);
         this.load.image('enemy', enemyImage);
@@ -40,16 +73,7 @@ export default class BootScene extends Phaser.Scene {
 
         this.load.image('coin', coinImage);
 
-        // Загрузка звука
-        this.load.audio('gameMusic', [
-            gameMusic
-        ]);
-
-        this.load.audio('PickUpCoinMusic', [
-            PickUpCoinMusic
-        ]);
-
-        // Прогресс-бар для визуализации загрузки
+        // Прогресс-бар
         const { width, height } = this.cameras.main;
         const progressBar = this.add.graphics();
         const progressBox = this.add.graphics();
@@ -75,7 +99,7 @@ export default class BootScene extends Phaser.Scene {
             this.soundManager = new SoundManager(this);
         }
         
-        this.soundManager.initMusic(); // Важно: инициализируем перед использованием
+        this.soundManager.initMusic(); //Инициализируем перед использованием
         
         const startGame = () => {
             this.soundManager.playMusic();
@@ -85,7 +109,7 @@ export default class BootScene extends Phaser.Scene {
 
         this.input.on('pointerdown', startGame);
         
-        // Текст-инструкция
+        //Текст-инструкция
         this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 50,

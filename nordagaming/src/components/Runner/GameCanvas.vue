@@ -18,23 +18,37 @@
                 width: 2500,
                 height: 700,
                 physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 2500 },
-                    debug: false,
-                    fixedStep: true
-                }
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 2500 },
+                        debug: true,
+                        fixedStep: true
+                    }
                 },
                 scene: [BootScene, MainScene, UiScene, GameOverScene, VictoryScene]
             };
-        
+
             this.game = new Phaser.Game(config);
+            
+            // Связываем Phaser с Vue компонентом
+            this.game.events.on('ready', () => {
+                const mainScene = this.game.scene.getScene('MainScene');
+                if (mainScene) {
+                    mainScene.setVueContext(this); // Передаем контекст в сцену
+                }
+            });
         },
         beforeDestroy() {
             if (this.game) this.game.destroy(true);
+        },
+        methods: {
+            // Отправка обновленного счета
+            handleScoreUpdate(newScore) {
+                this.$emit('update-score', newScore);
+            },
         }
     };
-    </script>
+</script>
     
 <style scoped>
     .game-container {

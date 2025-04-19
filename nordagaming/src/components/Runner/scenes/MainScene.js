@@ -8,24 +8,30 @@ export default class MainScene extends Phaser.Scene {
         super({ key: 'MainScene' });
         this.groundTiles = []; 
         this.backgrounds = []; 
+        this.vueContext = null; //для хранения контекста
     }
 
     init() {
-        this.score = 0;
-        this.gameSpeed = 4;
-        this.gameMaxSpeed = 6.5;
-        this.enemies = this.add.group();
+        this.score = 0; 
+        this.currentSkinIndex = 0;
         this.coinsCollected = 0;
-        this.nextCoinThreshold = 1;
-        this.nextCoinThrough = 1;
-        this.WINgame = 10;
+        this.gameSpeed = 7;
+        this.gameMaxSpeed = 8;
+        this.acceleration = 0.0001;
+        this.enemies = this.add.group();
+        this.nextCoinThreshold = 5;
+        this.nextCoinThrough = 10;
     }
 
     create() {
+        this.availableSkins = this.loadCoinSkins().filter((skin, index, self) => 
+            self.findIndex(s => s.id === skin.id) === index
+        );
+
         this.soundManager = this.scene.get('BootScene').soundManager;
 
         this.physics.world.createDebugGraphic();
-        this.physics.world.drawDebug = false;
+        this.physics.world.drawDebug = true;
 
         this.createBackground();
 
@@ -64,6 +70,9 @@ export default class MainScene extends Phaser.Scene {
             allowGravity: false, 
             immovable: true
         }).setDepth(5);
+
+        this.availableSkins = this.loadCoinSkins();
+        this.collectedSkins = new Set();
         
         
         this.setupCollisions();
@@ -82,16 +91,46 @@ export default class MainScene extends Phaser.Scene {
         this.coinGroup.getChildren().forEach(coin => coin.update(this.gameSpeed));
         
         this.incrementScore();
+
+        // Увеличение скорости до максимальной
+        if (this.gameSpeed < this.gameMaxSpeed) {
+            this.gameSpeed += this.acceleration; // Настройте значение ускорения
+        }
+
+        // Ограничиваем скорость максимумом
+        this.gameSpeed = Phaser.Math.Clamp(
+            this.gameSpeed, 
+            4, 
+            this.gameMaxSpeed
+        );
     }
 
-    handlePlayerCoinCollision(player, coin) {
+    setVueContext(context) {
+        this.vueContext = context;
+    }
+
+    loadCoinSkins() {
+        const skins = JSON.parse(localStorage.getItem('coinSkins')) || [];
+        skins.forEach(skin => {
+          if(!this.textures.exists(`coin_${skin.id}`)) {
+            this.textures.addBase64(`coin_${skin.id}`, skin.data);
+          }
+        });
+        return skins;
+      }
+
+      handlePlayerCoinCollision(player, coin) {
         coin.destroy();
         this.coinsCollected++;
         this.soundManager.playSound('PickUpCoinMusic'); 
-        
-        if (this.coinsCollected >= this.WINgame) {
-            this.scene.start('VictoryScene', { coins: this.coinsCollected });
-            this.scene.pause();
+    
+        const textureKey = coin.texture.key;
+        if (!textureKey.startsWith('coin_')) return; // Пропускаем базовые монеты
+
+        if (this.coinsCollected === this.availableSkins.length) {
+            this.scene.start('VictoryScene', { 
+                coins: this.coinsCollected 
+            });
         }
     }
 
@@ -105,7 +144,11 @@ export default class MainScene extends Phaser.Scene {
     spawnCoin() {
         const x = this.cameras.main.width + Phaser.Math.Between(200, 400);
         const y = this.cameras.main.height - 250; // Позиция над землей
-        new Coin(this, x, y, this.coinGroup);
+
+        const skin = this.availableSkins[this.currentSkinIndex];
+        new Coin(this, x, y, this.coinGroup, `coin_${skin.id}`);
+
+        this.currentSkinIndex = (this.currentSkinIndex + 1) % this.availableSkins.length;
     }
 
 
@@ -248,5 +291,9 @@ export default class MainScene extends Phaser.Scene {
     incrementScore() {
         this.score += 0.02;
         this.registry.set('score', Math.floor(this.score));
+
+        if (this.vueContext) {
+            this.vueContext.handleScoreUpdate(Math.floor(this.score));
+        }
     }
 }

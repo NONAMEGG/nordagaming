@@ -1,26 +1,30 @@
 export default class Coin extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, group) {
-        super(scene, x, y, 'coin');
+    constructor(scene, x, y, group, texture) {
+        super(scene, x, y, texture || 'coin');
         scene.add.existing(this);
         scene.physics.add.existing(this);
-        
-        this.setOrigin(0.5, 0.5);
-        this.setScale(0.1);
+
+
+        const targetSize = 80;
+        this.setDisplaySize(targetSize, targetSize);
+
+        const hitboxSize = 400; //размер хитбокса
         this.body
-            .setSize(800, 800)
-            .setOffset(0, 0)
+            .setSize(hitboxSize, hitboxSize)
+            .setOffset(
+                (this.width - hitboxSize) / 2,  // Центрирование
+                (this.height - hitboxSize) / 2  // 
+            )
             .allowGravity = false;
+
         this.setImmovable(true);
-        
         group.add(this);
     }
 
     update(speed) {
-        // Движение влево с общей скоростью игры
         this.setVelocityX(-speed * 200);
         
-        // Уничтожение за пределами экрана
-        if (this.x < -this.width * 2) {
+        if (this.x < -this.displayWidth * 2) {
             this.destroy();
         }
     }
