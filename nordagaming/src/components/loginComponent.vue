@@ -39,14 +39,13 @@ export default {
     data() {
         return {
             internalDialog: this.modelValue,
-            identifier: '', // can be email or username
+            identifier: '', 
             password: '',
             valid: false,
             rules: {
                 required: (value) => !!value || 'Required.',
                 emailOrUsername: (value) => {
                     if (!value) return true;
-                    // Accepts either a valid email or a username (alphanumeric, 3+ chars)
                     const email = /.+@.+\..+/.test(value);
                     const username = /^[a-zA-Z0-9_]{3,}$/.test(value);
                     return email || username || 'Enter a valid email or username (min 3 chars).';
@@ -68,8 +67,6 @@ export default {
         },
         submit() {
             if (this.$refs.form.validate()) {
-                // Handle login logic here
-                // You can distinguish email vs username here if needed
                 console.log('Identifier:', this.identifier);
                 console.log('Password:', this.password);
             }
