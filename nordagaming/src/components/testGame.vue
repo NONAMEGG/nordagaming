@@ -32,6 +32,6 @@
   });
   
   onUnmounted(() => {
-    game?.destroy(true); // Cleanup
+    game?.destroy(true);
   });
   </script>
