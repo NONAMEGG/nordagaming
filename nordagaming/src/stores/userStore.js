@@ -12,6 +12,10 @@ export const useUserStore = defineStore("user", {
       password: "",
     },
   }),
+  getters: {
+    isAuthenticated: (state) =>
+      !!state.user.name && !!state.user.email && !!state.user.password,
+  },
   actions: {
     updateProfile(updatedData) {
       if (updatedData.name !== undefined && updatedData.name !== null) {

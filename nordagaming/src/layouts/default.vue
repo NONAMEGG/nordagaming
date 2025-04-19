@@ -1,13 +1,28 @@
 <template>
-  <AppHeader />
+  <AppHeader @show-login-dialog="loginDialog = true" @show-signup-page="goToSignUp" />
+  <loginComponent v-model="loginDialog" />
   <v-main class="blur-background">
     <router-view />
   </v-main>
-
 </template>
 
-<script setup>
+<script>
+import AppHeader from "@/components/AppHeader.vue";
+import loginComponent from "@/components/loginComponent.vue";
 
+export default {
+  components: { AppHeader, loginComponent },
+  data() {
+    return {
+      loginDialog: false,
+    };
+  },
+  methods: {
+    goToSignUp() {
+      this.$router.push("/sign_up");
+    },
+  },
+};
 </script>
 
 <style>

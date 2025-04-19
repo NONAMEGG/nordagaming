@@ -13,13 +13,22 @@
             <template v-slot:append>
               <v-btn
                 icon
-                class="text-none"
+                class="text-none mr-2"
                 color="indigo"
                 text="Edit Profile"
                 slim
                 @click="showEditState = !showEditState"
               >
                 <v-icon icon="mdi-pencil"></v-icon>
+              </v-btn>
+              <v-btn
+                icon
+                color="red"
+                text="Logout"
+                slim
+                @click="logout"
+              >
+                <v-icon icon="mdi-logout"></v-icon>
               </v-btn>
             </template>
           </v-list-item>
@@ -70,9 +79,11 @@
 <script setup>
 import { useUserStore } from '../stores/userStore';
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import avatarImage from '@/assets/logo.png'; // Make sure this path is correct
 
 const userStore = useUserStore();
+const router = useRouter();
 const showEditState = ref(false);
 const newLogin = ref('');
 const newEmail = ref('');
@@ -80,31 +91,29 @@ const newPassword = ref('');
 
 const isPasswordValid = computed(() => {
   if (!newPassword.value) {
-    return true; // Don't validate if the field is empty (user might not be changing password)
+    return true;
   }
   return newPassword.value.length > 5 && /\d/.test(newPassword.value);
 });
 
 const isEmailValid = computed(() => {
   if (!newEmail.value) {
-    return true; // Don't validate if the field is empty (user might not be changing email)
+    return true;
   }
-  // Basic email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(newEmail.value);
 });
 
 const isSaveButtonDisabled = computed(() => {
-  // Disable the button if in edit mode and either email or password (if entered) is invalid
   return showEditState.value && ((newEmail.value !== '' && !isEmailValid.value) || (newPassword.value !== '' && !isPasswordValid.value));
 });
 
 const saveProfileChanges = () => {
   if (showEditState.value && (newEmail.value !== '' && !isEmailValid.value)) {
-    return; // Don't save if email is invalid
+    return;
   }
   if (showEditState.value && (newPassword.value !== '' && !isPasswordValid.value)) {
-    return; // Don't save if password is invalid
+    return;
   }
 
   const updatedData = {};
@@ -125,5 +134,10 @@ const saveProfileChanges = () => {
   newEmail.value = '';
   newPassword.value = '';
   showEditState.value = false;
+};
+
+const logout = () => {
+  userStore.$reset(); // Pinia's built-in reset method
+  router.push({ name: '/' }); // Assumes your index route is named 'index'
 };
 </script>

@@ -16,7 +16,23 @@
             <v-btn icon @click="showTopUsers = !showTopUsers">
               <v-icon icon="mdi-podium"></v-icon>
             </v-btn>
-            <v-btn icon class="ml-2 pt-1" @click="$router.push('/profile')">
+            <v-btn
+              v-if="!isAuthenticated"
+              color="primary"
+              @click="openLogin"
+            >Login</v-btn>
+            <v-btn
+              v-if="!isAuthenticated"
+              color="secondary"
+              class="ml-2"
+              @click="openSignUp"
+            >Sign Up</v-btn>
+            <v-btn
+              v-else
+icon
+class="ml-2 pt-1"
+@click="goToProfile"
+>
               <v-icon icon="mdi-account"></v-icon>
             </v-btn>
           </div>
@@ -64,20 +80,37 @@
   </template>
   
   <script>
-  export default {
-    data() {
-      return {
-        showTopUsers: false,
-        topUsers: [
-          { id: 1, name: 'Player1', points: 1250, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-          { id: 2, name: 'Player2', points: 1100, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-          { id: 3, name: 'Player3', points: 950, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
-          // Add more users as needed
-        ]
-      }
-    }
-  }
-  </script>
+import { useUserStore } from "@/stores/userStore";
+import { mapState } from "pinia";
+
+export default {
+  data() {
+    return {
+      showTopUsers: false,
+      topUsers: [
+        { id: 1, name: 'Player1', points: 1250, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
+        { id: 2, name: 'Player2', points: 1100, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
+        { id: 3, name: 'Player3', points: 950, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
+        // Add more users as needed
+      ],
+    };
+  },
+  computed: {
+    ...mapState(useUserStore, ["isAuthenticated"]),
+  },
+  methods: {
+    openLogin() {
+      this.$emit("show-login-dialog");
+    },
+    openSignUp() {
+      this.$emit("show-signup-page");
+    },
+    goToProfile() {
+      this.$router.push("/profile");
+    },
+  },
+};
+</script>
   
   <style>
   /* Custom styling if needed */

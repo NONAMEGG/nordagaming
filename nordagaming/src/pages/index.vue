@@ -9,6 +9,7 @@
 
         <h1 class="text-h2 font-weight-bold">Nordagaming</h1>
       </div>
+      
   </v-responsive>
     </v-container>
 </template>
