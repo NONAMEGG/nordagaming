@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import NFTBetting from "./nftBetting.json"; // ABI для NFTBetting
-import MockNFT from "./nftabi.json"; // ABI для MockNFT
+import NFTBetting from "./nftBetting.json"; 
+import MockNFT from "./nftabi.json";
 
 // Адреса контрактов
-const NFT_BETTING_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // адрес NFTBetting
-const MOCK_NFT_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"; // адрес вашего MockNFT
+const NFT_BETTING_ADDRESS = "0x851356ae760d987E095750cCeb3bC6014560891C"; // адрес NFTBetting
+const MOCK_NFT_ADDRESS = "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8"; // адрес вашего MockNFT
 
 // Функция для получения контракта NFTBetting
 export async function getNFTBettingContract() {
