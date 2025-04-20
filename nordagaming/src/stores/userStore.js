@@ -14,7 +14,7 @@ export const useUserStore = defineStore("user", {
   }),
   getters: {
     isAuthenticated: (state) =>
-      !!state.user.name && !!state.user.email && !!state.user.password,
+      !!state.user.name && !!state.user.email /*&& !!state.user.password*/,
   },
   actions: {
     updateProfile(updatedData) {
@@ -24,13 +24,13 @@ export const useUserStore = defineStore("user", {
       if (updatedData.email !== undefined && updatedData.email !== null) {
         this.user.email = updatedData.email;
       }
-      if (
-        updatedData.password !== undefined &&
-        updatedData.password !== null &&
-        updatedData.password !== ""
-      ) {
-        this.user.password = updatedData.password;
-      }
+      //if (
+      //  updatedData.password !== undefined &&
+      //  updatedData.password !== null &&
+      //  updatedData.password !== ""
+      //) {
+      //  this.user.password = updatedData.password;
+      //}
 
       console.log("Profile updated:", this.user);
     },
