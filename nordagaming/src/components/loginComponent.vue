@@ -39,7 +39,7 @@ export default {
     data() {
         return {
             internalDialog: this.modelValue,
-            identifier: '', 
+            identifier: '',
             password: '',
             valid: false,
             rules: {
