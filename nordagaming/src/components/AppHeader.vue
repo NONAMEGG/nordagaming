@@ -69,6 +69,7 @@
         <v-list-item
           v-for="(user, index) in topUsers"
           :key="user.id"
+          :prepend-avatar="user.avatar"
         >
           <template v-slot:prepend>
             <v-badge
