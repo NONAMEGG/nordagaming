@@ -80,7 +80,7 @@
 import { useUserStore } from '../stores/userStore';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import avatarImage from '@/assets/logo.png'; // Make sure this path is correct
+import avatarImage from '@/assets/logo.png';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -137,7 +137,7 @@ const saveProfileChanges = () => {
 };
 
 const logout = () => {
-  userStore.$reset(); // Pinia's built-in reset method
-  router.push({ name: '/' }); // Assumes your index route is named 'index'
+  userStore.reset();
+  router.push({ name: '/' });
 };
 </script>

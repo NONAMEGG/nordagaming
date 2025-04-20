@@ -37,6 +37,7 @@
 import { ref } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'vue-router';
+import { registration } from '../http/userAPI.js'
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -55,13 +56,19 @@ const rules = {
 };
 
 async function register() {
-  if (await form.value?.validate()) {
-    await userStore.updateProfile({
-      name: login.value,
-      email: email.value,
-      password: password.value,
-    });
-    router.push('/');
+  try{
+    const response = await registration(login.value, email.value, password.value);
+    console.log(response);
+    if (await form.value?.validate()) {
+      await userStore.updateProfile({
+        id: response.data.id,
+        name: response.data.name,
+        email: response.data.email,
+      });
+      router.push('/');
+    }
+  } catch(err){
+    console.log('Произошла ошибка: ', err.message);
   }
 }
 </script>

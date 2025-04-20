@@ -29,6 +29,11 @@
 </template>
 
 <script>
+import {login} from '../http/userAPI.js'
+import { useUserStore } from '@/stores/userStore';
+
+const userStore = useUserStore();
+
 export default {
     props: {
         modelValue: {
@@ -39,14 +44,13 @@ export default {
     data() {
         return {
             internalDialog: this.modelValue,
-            identifier: '', // can be email or username
+            identifier: '',
             password: '',
             valid: false,
             rules: {
                 required: (value) => !!value || 'Required.',
                 emailOrUsername: (value) => {
                     if (!value) return true;
-                    // Accepts either a valid email or a username (alphanumeric, 3+ chars)
                     const email = /.+@.+\..+/.test(value);
                     const username = /^[a-zA-Z0-9_]{3,}$/.test(value);
                     return email || username || 'Enter a valid email or username (min 3 chars).';
@@ -68,15 +72,30 @@ export default {
         },
         submit() {
             if (this.$refs.form.validate()) {
-                // Handle login logic here
-                // You can distinguish email vs username here if needed
                 console.log('Identifier:', this.identifier);
                 console.log('Password:', this.password);
+                this.loginUser()
             }
         },
+        async loginUser(){
+          try{
+            const response = await login(this.identifier, this.password);
+            console.log(response);
+            this.closeDialog();
+            await userStore.updateProfile({
+              id: response.data.id,
+              name: response.data.name,
+              email: response.data.email,
+            });
+            router.push('/');
+          }catch(error){
+            console.log('Произошла ошибка, ', error)
+          }
+        }
     },
 };
 </script>
 
 <style scoped>
 </style>
+

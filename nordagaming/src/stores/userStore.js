@@ -4,6 +4,7 @@ import avatarImage from "@/assets/logo.png";
 export const useUserStore = defineStore("user", {
   state: () => ({
     user: {
+      id: "123",
       name: "John Doe",
       email: "john.doe@example.com",
       avatar: avatarImage,
@@ -14,7 +15,7 @@ export const useUserStore = defineStore("user", {
   }),
   getters: {
     isAuthenticated: (state) =>
-      !!state.user.name && !!state.user.email && !!state.user.password,
+      !!state.user.name && !!state.user.email /*&& !!state.user.password*/,
   },
   actions: {
     updateProfile(updatedData) {
@@ -24,15 +25,26 @@ export const useUserStore = defineStore("user", {
       if (updatedData.email !== undefined && updatedData.email !== null) {
         this.user.email = updatedData.email;
       }
-      if (
-        updatedData.password !== undefined &&
-        updatedData.password !== null &&
-        updatedData.password !== ""
-      ) {
-        this.user.password = updatedData.password;
-      }
+      //if (
+      //  updatedData.password !== undefined &&
+      //  updatedData.password !== null &&
+      //  updatedData.password !== ""
+      //) {
+      //  this.user.password = updatedData.password;
+      //}
 
       console.log("Profile updated:", this.user);
     },
+    reset() {
+      this.user = {
+        id: "",
+        name: "",
+        email: "",
+        avatar: avatarImage,
+        wallet: "",
+        currentPoints: 0,
+        password: "",
+      };
+    }
   },
 });
