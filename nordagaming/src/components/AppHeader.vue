@@ -51,61 +51,69 @@
     </v-container>
   </v-app-bar>
 
-  <v-navigation-drawer
-    v-model="showTopUsers"
-    app
-    temporary
-    width="300"
-  >
-    <v-card flat>
-      <v-card-title class="d-flex justify-space-between align-center">
-        <span>Top Users</span>
-        <v-btn icon @click="showTopUsers = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-      
-      <v-list>
-        <v-list-item
-          v-for="(user, index) in topUsers"
-          :key="user.id"
-          :prepend-avatar="user.avatar"
-        >
-          <template v-slot:prepend>
-            <v-badge
-              :content="index + 1"
-              color="amber"
-              overlap
+  <v-card flat>
+          <v-card-title class="d-flex justify-space-between align-center">
+            <span>Top Users</span>
+            <v-btn icon @click="showTopUsers = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-title>
+
+          <v-list>
+            <v-list-item
+              v-for="(user, index) in topUsers"
+              :key="user.id"
+              :prepend-avatar="user.avatar"
             >
-              <v-avatar size="40">
-                <v-img :src="user.avatar"></v-img>
-              </v-avatar>
-            </v-badge>
-          </template>
-          
-          <v-list-item-title>{{ user.name }}</v-list-item-title>
-          <v-list-item-subtitle>{{ user.points }} points</v-list-item-subtitle>
-        </v-list-item>
-      </v-list>
-    </v-card>
-  </v-navigation-drawer>
+              <template v-slot:prepend>
+                <v-badge
+                  :content="index + 1"
+                  color="amber"
+                  overlap
+                >
+                  <v-avatar size="40">
+                    <v-img :src="user.avatar"></v-img>
+                  </v-avatar>
+                </v-badge>
+
+              <v-list-item-title>{{ user.name }}</v-list-item-title>
+              <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
+            </v-list-item>
+          </v-list>
+          <!-- Кнопка "Загрузить еще" -->
+          <div class="text-center pa-3">
+            <v-btn
+              v-if="hasMore && !loading"
+              color="primary"
+              @click="loadUsers"
+            >Загрузить ещё</v-btn>
+            <v-progress-circular
+              v-else-if="loading"
+              indeterminate
+              color="primary"
+            ></v-progress-circular>
+          </div>
+        </v-card>
+      </v-navigation-drawer>
 </template>
 
-<script>
+  <script>
 import { useUserStore } from "@/stores/userStore";
 import { mapState } from "pinia";
+import {fetchRecords} from "../http/recordsAPI.js"
 
 const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
 
 export default {
+  emits: ['show-login-dialog', 'show-signup-page'],
   data() {
     return {
       showTopUsers: false,
-      topUsers: [
-        { id: 1, name: 'Player1', points: 1250, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-        { id: 2, name: 'Player2', points: 1100, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-        { id: 3, name: 'Player3', points: 950, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' },
-      ],
+      topUsers: [],
+      page: 1,
+      limit: 10,
+      loading: false,
+      hasMore: true,
     };
   },
   computed: {
@@ -126,6 +134,17 @@ export default {
       return this.route.path === '/sign_up';
     },
   },
+  watch: {
+    showTopUsers(val) {
+      if (val) {
+        if (this.topUsers.length === 0) {
+          this.loadUsers();
+        }
+      } else {
+       this.resetTopUsers();
+      }
+    },
+  },
   methods: {
     openLogin() {
       this.$emit("show-login-dialog");
@@ -136,6 +155,32 @@ export default {
     goToProfile() {
       this.$router.push("/profile");
     },
+    async loadUsers() {
+      if (!this.hasMore) return;
+      if (this.loading || !this.hasMore) return;
+      this.loading = true;
+      try {
+        const res = await fetchRecords(this.limit, this.page);
+        const newUsers = res.data.records || [];
+        console.log(res);
+        if (newUsers.length < this.limit) {
+          this.hasMore = false;
+        }
+        this.topUsers.push(...newUsers);
+        this.page++;
+      } catch (error) {
+        console.error("Ошибка при загрузке пользователей:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    resetTopUsers() {
+      this.topUsers = [];
+      this.page = 1;
+      this.limit = 10;
+      this.hasMore = true;
+      this.loading = false;
+    }
   },
 };
 </script>
