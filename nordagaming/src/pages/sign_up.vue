@@ -61,6 +61,7 @@ async function register() {
     console.log(response);
     if (await form.value?.validate()) {
       await userStore.updateProfile({
+        id: response.data.id,
         name: response.data.name,
         email: response.data.email,
       });

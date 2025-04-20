@@ -137,7 +137,7 @@ const saveProfileChanges = () => {
 };
 
 const logout = () => {
-  userStore.$reset();
-  router.push({ name: '/' }); 
+  userStore.reset();
+  router.push({ name: '/' });
 };
 </script>

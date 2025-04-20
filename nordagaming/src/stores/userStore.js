@@ -4,6 +4,7 @@ import avatarImage from "@/assets/logo.png";
 export const useUserStore = defineStore("user", {
   state: () => ({
     user: {
+      id: "123",
       name: "John Doe",
       email: "john.doe@example.com",
       avatar: avatarImage,
@@ -34,5 +35,16 @@ export const useUserStore = defineStore("user", {
 
       console.log("Profile updated:", this.user);
     },
+    reset() {
+      this.user = {
+        id: "",
+        name: "",
+        email: "",
+        avatar: avatarImage,
+        wallet: "",
+        currentPoints: 0,
+        password: "",
+      };
+    }
   },
 });

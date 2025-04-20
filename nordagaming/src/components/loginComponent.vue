@@ -29,6 +29,11 @@
 </template>
 
 <script>
+import {login} from '../http/userAPI.js'
+import { useUserStore } from '@/stores/userStore';
+
+const userStore = useUserStore();
+
 export default {
     props: {
         modelValue: {
@@ -69,8 +74,24 @@ export default {
             if (this.$refs.form.validate()) {
                 console.log('Identifier:', this.identifier);
                 console.log('Password:', this.password);
+                this.loginUser()
             }
         },
+        async loginUser(){
+          try{
+            const response = await login(this.identifier, this.password);
+            console.log(response);
+            this.closeDialog();
+            await userStore.updateProfile({
+              id: response.data.id,
+              name: response.data.name,
+              email: response.data.email,
+            });
+            router.push('/');
+          }catch(error){
+            console.log('Произошла ошибка, ', error)
+          }
+        }
     },
 };
 </script>
