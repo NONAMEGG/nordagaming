@@ -1,51 +1,57 @@
 <template>
-      <v-app-bar app class="px-0">
-        <v-container class="d-flex align-center justify-space-between pa-0 px-5" fluid>
-          <div class="">TheWall.gaming</div>
+  <v-app-bar app style="position: relative;">
+    <v-container class="d-flex align-center pa-0 px-5" fluid style="position: relative;">
+      <div class="header-side">
+        TheWall.gaming
+      </div>
 
-          <div class="">
-            <v-tabs center-active>
-              <v-tab to="/">Home</v-tab>
-              <v-tab to="/runner">Runner</v-tab>
-              <v-tab to="/staking">Staking</v-tab>
-              <v-tab to="/wheel">Wheel</v-tab>
-            </v-tabs>
-          </div>
+      <div class="header-center">
+        <v-tabs
+          v-model="mainTabValue"
+          center-active
+          :slider-color="isMainTab ? undefined : 'transparent'"
+        >
+          <v-tab to="/" value="/">Home</v-tab>
+          <v-tab to="/runner" value="/runner">Runner</v-tab>
+          <v-tab to="/staking" value="/staking">Staking</v-tab>
+          <v-tab to="/wheel" value="/wheel">Wheel</v-tab>
+        </v-tabs>
+      </div>
 
-          <div class="">
-            <v-btn icon @click="showTopUsers = !showTopUsers">
-              <v-icon icon="mdi-podium"></v-icon>
-            </v-btn>
-            <v-btn
-              v-if="!isAuthenticated"
-              color="primary"
-              @click="openLogin"
-            >Login</v-btn>
-            <v-btn
-              v-if="!isAuthenticated"
-              color="secondary"
-              class="ml-2"
-              @click="openSignUp"
-            >Sign Up</v-btn>
-            <v-btn
-              v-else
-icon
-class="ml-2 pt-1"
-@click="goToProfile"
->
-              <v-icon icon="mdi-account"></v-icon>
-            </v-btn>
-          </div>
-        </v-container>
-      </v-app-bar>
+      <div class="header-side header-side-right-absolute">
+        <div class="header-actions">
+          <v-btn icon @click="showTopUsers = !showTopUsers">
+            <v-icon icon="mdi-podium"></v-icon>
+          </v-btn>
+          <v-btn
+            v-if="!isAuthenticated"
+            color="primary"
+            class="ml-2"
+            @click="openLogin"
+          >Login</v-btn>
+          <v-btn
+            v-if="!isAuthenticated"
+            color="secondary"
+            class="ml-2"
+            :variant= "isSignUpPage ? 'tonal' : 'text'"
+            @click="openSignUp"
+          >Sign Up</v-btn>
+          <v-btn
+            v-else
+            icon
+            class="ml-2"
+            :color="isProfilePage ? 'primary' : undefined"
+            :variant="isProfilePage ? 'tonal' : undefined"
+            @click="goToProfile"
+          >
+            <v-icon icon="mdi-account"></v-icon>
+          </v-btn>
+        </div>
+      </div>
+    </v-container>
+  </v-app-bar>
 
-      <v-navigation-drawer
-        v-model="showTopUsers"
-        app
-        temporary
-        width="300"
-      >
-        <v-card flat>
+  <v-card flat>
           <v-card-title class="d-flex justify-space-between align-center">
             <span>Top Users</span>
             <v-btn icon @click="showTopUsers = false">
@@ -69,7 +75,6 @@ class="ml-2 pt-1"
                     <v-img :src="user.avatar"></v-img>
                   </v-avatar>
                 </v-badge>
-              </template>
 
               <v-list-item-title>{{ user.name }}</v-list-item-title>
               <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
@@ -90,12 +95,14 @@ class="ml-2 pt-1"
           </div>
         </v-card>
       </v-navigation-drawer>
-  </template>
+</template>
 
   <script>
 import { useUserStore } from "@/stores/userStore";
 import { mapState } from "pinia";
 import {fetchRecords} from "../http/recordsAPI.js"
+
+const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
 
 export default {
   emits: ['show-login-dialog', 'show-signup-page'],
@@ -111,6 +118,21 @@ export default {
   },
   computed: {
     ...mapState(useUserStore, ["isAuthenticated"]),
+    route() {
+      return this.$route;
+    },
+    isMainTab() {
+      return MAIN_TABS.includes(this.route.path);
+    },
+    isProfilePage() {
+      return this.route.path === '/profile';
+    },
+    mainTabValue() {
+      return this.isMainTab ? this.route.path : null;
+    },
+    isSignUpPage() {
+      return this.route.path === '/sign_up';
+    },
   },
   watch: {
     showTopUsers(val) {
@@ -162,10 +184,35 @@ export default {
   },
 };
 </script>
-
-  <style>
-  /* Custom styling if needed */
-  .v-navigation-drawer__content {
-    overflow-y: auto;
-  }
-  </style>
+  
+<style>
+.header-side {
+  z-index: 2;
+}
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  width: max-content;
+}
+.header-side-right-absolute {
+  position: absolute;
+  right: 32px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 3;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.v-navigation-drawer__content {
+  overflow-y: auto;
+}
+</style>
