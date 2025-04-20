@@ -51,50 +51,55 @@
     </v-container>
   </v-app-bar>
 
-  <v-card flat>
-          <v-card-title class="d-flex justify-space-between align-center">
-            <span>Top Users</span>
-            <v-btn icon @click="showTopUsers = false">
-              <v-icon>mdi-close</v-icon>
-            </v-btn>
-          </v-card-title>
+  <v-navigation-drawer
+    v-model="showTopUsers"
+    right
+    temporary
+    width="400"
+  >
+    <v-card flat>
+      <v-card-title class="d-flex justify-space-between align-center">
+        <span>Top Users</span>
+        <v-btn icon @click="showTopUsers = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
 
-          <v-list>
-            <v-list-item
-              v-for="(user, index) in topUsers"
-              :key="user.id"
-              :prepend-avatar="user.avatar"
+      <v-list>
+        <v-list-item
+          v-for="(user, index) in topUsers"
+          :key="user.id"
+        >
+          <template v-slot:prepend>
+            <v-badge
+              :content="index + 1"
+              color="amber"
+              overlap
             >
-              <template v-slot:prepend>
-                <v-badge
-                  :content="index + 1"
-                  color="amber"
-                  overlap
-                >
-                  <v-avatar size="40">
-                    <v-img :src="user.avatar"></v-img>
-                  </v-avatar>
-                </v-badge>
-
-              <v-list-item-title>{{ user.name }}</v-list-item-title>
-              <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
-            </v-list-item>
-          </v-list>
-          <!-- Кнопка "Загрузить еще" -->
-          <div class="text-center pa-3">
-            <v-btn
-              v-if="hasMore && !loading"
-              color="primary"
-              @click="loadUsers"
-            >Загрузить ещё</v-btn>
-            <v-progress-circular
-              v-else-if="loading"
-              indeterminate
-              color="primary"
-            ></v-progress-circular>
-          </div>
-        </v-card>
-      </v-navigation-drawer>
+              <v-avatar size="40">
+                <v-img :src="user.avatar"></v-img>
+              </v-avatar>
+            </v-badge>
+          </template>
+          <v-list-item-title>{{ user.name }}</v-list-item-title>
+          <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+      <!-- Кнопка "Загрузить еще" -->
+      <div class="text-center pa-3">
+        <v-btn
+          v-if="hasMore && !loading"
+          color="primary"
+          @click="loadUsers"
+        >Загрузить ещё</v-btn>
+        <v-progress-circular
+          v-else-if="loading"
+          indeterminate
+          color="primary"
+        ></v-progress-circular>
+      </div>
+    </v-card>
+  </v-navigation-drawer>
 </template>
 
   <script>
