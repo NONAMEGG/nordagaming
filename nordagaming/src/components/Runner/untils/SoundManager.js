@@ -62,8 +62,4 @@ export default class SoundManager {
         }
         return this.soundEnabled;
     }
-
-    destroed(){
-        this.destroy();
-    }
 }

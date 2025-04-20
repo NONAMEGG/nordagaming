@@ -18,7 +18,7 @@ export default {
         ];
 
         try {
-            const CLUSTER_ID = "your-cluster-id-here";
+            const CLUSTER_ID = "111";
             const query = `
                 query GetClusterImages($id: ID!) {
                 cluster(id: $id) {

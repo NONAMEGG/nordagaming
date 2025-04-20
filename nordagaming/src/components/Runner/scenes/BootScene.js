@@ -1,21 +1,25 @@
 // scenes/BootScene.js
-import backgroundImage from '@/components/Runner/assets/images/background2.jpg';
-// import playerImage from '@/components/Runner/assets/images/player.png';
-import enemyImage from '@/components/Runner/assets/images/enemy.png';
+import backgroundImage from '@/components/Runner/assets/images/Background/background2.jpg';
+import enemy1 from '@/components/Runner/assets/images/Enemy/enemy1.png'
+import enemy2 from '@/components/Runner/assets/images/Enemy/enemy2.png';
+import enemy3 from '@/components/Runner/assets/images/Enemy/enemy3.png';
+import enemy4 from '@/components/Runner/assets/images/Enemy/enemy4.png';
+import enemy5 from '@/components/Runner/assets/images/Enemy/enemy5.png';
+import grib from '@/components/Runner/assets/images/Player/Grib1.png';
+import grib2 from '@/components/Runner/assets/images/Player/Grib2.png';
+import grib3 from '@/components/Runner/assets/images/Player/Grib3.png';
+import grib4 from '@/components/Runner/assets/images/Player/Grib4.png';
+import floor1 from '@/components/Runner/assets/images/Floor/floor1.png'
+import floor2 from '@/components/Runner/assets/images/Floor/floor2.png'
+import floor3 from '@/components/Runner/assets/images/Floor/floor3.png'
+import floor4 from '@/components/Runner/assets/images/Floor/floor4.png'
+import floor5 from '@/components/Runner/assets/images/Floor/floor5.png'
+import coinImage from '@/components/Runner/assets/images/Coin/coin.png';
+
 import gameMusic from '@/components/Runner/assets/sounds/plaing_song.mp3';
 import PickUpCoinMusic from '@/components/Runner/assets/sounds/coin.mp3';
-import grib from '@/components/Runner/assets/images/Grib1.png';
-import grib2 from '@/components/Runner/assets/images/Grib2.png';
-import grib3 from '@/components/Runner/assets/images/Grib3.png';
-import grib4 from '@/components/Runner/assets/images/Grib4.png';
-import floor1 from '@/components/Runner/assets/images/floor1.png'
-import floor2 from '@/components/Runner/assets/images/floor1.png'
-import floor3 from '@/components/Runner/assets/images/floor1.png'
-import floor4 from '@/components/Runner/assets/images/floor1.png'
-import floor5 from '@/components/Runner/assets/images/floor1.png'
-import coinImage from '@/components/Runner/assets/images/coin.png';
-import SoundManager from '../untils/SoundManager.js';
 
+import SoundManager from '../untils/SoundManager.js';
 import ImageService from '../untils/ImageService.js';
 
 export default class BootScene extends Phaser.Scene {
@@ -57,8 +61,12 @@ export default class BootScene extends Phaser.Scene {
         });
 
         this.load.image('background', backgroundImage);
-        // this.load.image('player', playerImage);
-        this.load.image('enemy', enemyImage);
+
+        this.load.image('enemy1', enemy1);
+        this.load.image('enemy2', enemy2);
+        this.load.image('enemy3', enemy3);
+        this.load.image('enemy4', enemy4);
+        this.load.image('enemy5', enemy5);
 
         this.load.image('player_frame1', grib);
         this.load.image('player_frame2', grib2);
@@ -71,7 +79,7 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('floor_frame4', floor4);
         this.load.image('floor_frame5', floor5);
 
-        this.load.image('coin', coinImage);
+        //this.load.image('coin', coinImage);
 
         // Прогресс-бар
         const { width, height } = this.cameras.main;

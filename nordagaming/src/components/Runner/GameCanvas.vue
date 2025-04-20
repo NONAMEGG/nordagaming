@@ -9,6 +9,9 @@
     import UiScene from './scenes/UIScene.js';
     import GameOverScene from './scenes/GameOverScene.js';
     import VictoryScene from './scenes/VictoryScene.js';
+    import Web3 from 'web3';
+    import VictoryRewardJson from '../../../artifacts/contracts/VictoryReward.sol/VictoryReward.json'
+
     
     export default {
         mounted() {
@@ -46,6 +49,29 @@
             handleScoreUpdate(newScore) {
                 this.$emit('update-score', newScore);
             },
+
+            async claimVictoryReward() {
+                console.log(VictoryRewardJson.abi)
+                if (window.ethereum) {
+                    try {
+                    const web3 = new Web3(window.ethereum);
+                    await window.ethereum.enable();
+                    
+                    const contractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"; // import from deploy.cjs
+                    const contractABI = VictoryRewardJson.abi;
+                    
+                    const contract = new web3.eth.Contract(contractABI, contractAddress);
+                    const accounts = await web3.eth.getAccounts();
+                    
+                    await contract.methods.claimReward().send({ from: accounts[0] });
+                    alert("100 ETH успешно начислены!");
+                    } catch (error) {
+                        console.error("Ошибка:", error);
+                    }
+                } else {
+                    alert("Установите MetaMask!");
+                }
+            }
         }
     };
 </script>

@@ -15,12 +15,12 @@ export default class MainScene extends Phaser.Scene {
         this.score = 0; 
         this.currentSkinIndex = 0;
         this.coinsCollected = 0;
-        this.gameSpeed = 7;
-        this.gameMaxSpeed = 8;
+        this.gameSpeed = 4;
+        this.gameMaxSpeed = 5;
         this.acceleration = 0.0001;
         this.enemies = this.add.group();
-        this.nextCoinThreshold = 5;
-        this.nextCoinThrough = 10;
+        this.nextCoinThreshold = 1; //5
+        this.nextCoinThrough = 1;  //10
     }
 
     create() {
@@ -117,9 +117,9 @@ export default class MainScene extends Phaser.Scene {
           }
         });
         return skins;
-      }
+    }
 
-      handlePlayerCoinCollision(player, coin) {
+    handlePlayerCoinCollision(player, coin) {
         coin.destroy();
         this.coinsCollected++;
         this.soundManager.playSound('PickUpCoinMusic'); 
@@ -129,7 +129,8 @@ export default class MainScene extends Phaser.Scene {
 
         if (this.coinsCollected === this.availableSkins.length) {
             this.scene.start('VictoryScene', { 
-                coins: this.coinsCollected 
+                coins: this.coinsCollected,
+                vueContext: this.vueContext
             });
         }
     }
@@ -226,40 +227,57 @@ export default class MainScene extends Phaser.Scene {
     }
 
     spawnEnemy() {
-        // Проверка расстояния до последнего врага
         const lastEnemy = this.getLastEnemy();
-        const minDistanceBetweenWaves = 500; // Минимальное расстояние между волнами
-        const minDistanceInGroup = 150;      // Минимальное расстояние в группе
-        const maxDistanceInGroup = 200;      // Максимальное расстояние в группе
+        const minDistanceBetweenWaves = 500;
         
-        // Если последний враг ещё слишком близко, откладываем спавн
+        const random = Phaser.Math.Between(1, 100);
+        let enemyCount;
+        if (random <= 50) {         // 50% на 1 врага
+            enemyCount = 1;
+        } else if (random <= 80) {  // 30% на 2 врагов
+            enemyCount = 2;
+        } else {                    // 20% на 3 врагов
+            enemyCount = 3;
+        }
+    
+        // Если последний враг ещё слишком близко - откладываем спавн
         if (lastEnemy && lastEnemy.x > this.cameras.main.width - minDistanceBetweenWaves) {
             this.time.delayedCall(300, this.spawnEnemy, [], this);
             return;
         }
     
-        const random = Phaser.Math.Between(1, 100);
-        let enemyCount = random <= 60 ? 1 : 2;
-    
-        // Позиция Y
         const groundY = this.cameras.main.height - 200;
-        
-        // Спавн группы врагов с контролем расстояния
-        let prevX = this.cameras.main.width + 100; 
-        
-        for (let i = 0; i < enemyCount; i++) {
-            // Вычисляем расстояние до следующего врага в группе
-            const distance = Phaser.Math.Between(minDistanceInGroup, maxDistanceInGroup);
-            const x = prevX + distance;
-            
-            new Enemy(this, x, groundY, this.enemies);
-            prevX = x; // Запоминаем позицию для следующего врага
+        let prevX = this.cameras.main.width + 100;
+    
+        // Выбор множителя расстояния в зависимости от количества врагов
+        let distanceMultiplier;
+        switch(enemyCount) {
+            case 1:
+                distanceMultiplier = this.gameSpeed * 0.35;
+                break;
+            case 2:
+                distanceMultiplier = this.gameSpeed * 0.25;
+                break;
+            case 3:
+                distanceMultiplier = this.gameSpeed * 0.1;
+                break;
+            default:
+                distanceMultiplier = 1;
         }
     
-        // Интервал до следующего спавна (2-4 сек, зависит от скорости)
+        for (let i = 0; i < enemyCount; i++) {
+            // Динамическое расстояние с учетом множителя
+            const baseDistance = Phaser.Math.Between(150, 200);
+            const dynamicDistance = baseDistance * distanceMultiplier;
+            
+            const x = prevX + dynamicDistance;
+            new Enemy(this, x, groundY, this.enemies);
+            prevX = x;
+        }
+    
+        // Настройка задержки следующего спавна
         const baseDelay = Phaser.Math.Between(2000, 4000);
         const scaledDelay = baseDelay / Math.max(1, this.gameSpeed / 5);
-        
         this.time.delayedCall(scaledDelay, this.spawnEnemy, [], this);
     }
     

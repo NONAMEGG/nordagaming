@@ -6,11 +6,14 @@ export default class VictoryScene extends Phaser.Scene {
 
     init(data) {
         this.coins = data.coins || 0;
+        this.vueContext = data.vueContext;
     }
 
     create() {
         this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5)
             .setOrigin(0, 0);
+
+        this.vueContext.claimVictoryReward(); //
 
         this.add.text(
             this.cameras.main.centerX,
