@@ -6,11 +6,15 @@
       </div>
 
       <div class="header-center">
-        <v-tabs center-active>
-          <v-tab to="/">Home</v-tab>
-          <v-tab to="/runner">Runner</v-tab>
-          <v-tab to="/staking">Staking</v-tab>
-          <v-tab to="/wheel">Wheel</v-tab>
+        <v-tabs
+          v-model="mainTabValue"
+          center-active
+          :slider-color="isMainTab ? undefined : 'transparent'"
+        >
+          <v-tab to="/" value="/">Home</v-tab>
+          <v-tab to="/runner" value="/runner">Runner</v-tab>
+          <v-tab to="/staking" value="/staking">Staking</v-tab>
+          <v-tab to="/wheel" value="/wheel">Wheel</v-tab>
         </v-tabs>
       </div>
 
@@ -29,12 +33,15 @@
             v-if="!isAuthenticated"
             color="secondary"
             class="ml-2"
+            :variant= "isSignUpPage ? 'tonal' : 'text'"
             @click="openSignUp"
           >Sign Up</v-btn>
           <v-btn
             v-else
             icon
             class="ml-2"
+            :color="isProfilePage ? 'primary' : undefined"
+            :variant="isProfilePage ? 'tonal' : undefined"
             @click="goToProfile"
           >
             <v-icon icon="mdi-account"></v-icon>
@@ -88,6 +95,8 @@
 import { useUserStore } from "@/stores/userStore";
 import { mapState } from "pinia";
 
+const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
+
 export default {
   data() {
     return {
@@ -101,6 +110,21 @@ export default {
   },
   computed: {
     ...mapState(useUserStore, ["isAuthenticated"]),
+    route() {
+      return this.$route;
+    },
+    isMainTab() {
+      return MAIN_TABS.includes(this.route.path);
+    },
+    isProfilePage() {
+      return this.route.path === '/profile';
+    },
+    mainTabValue() {
+      return this.isMainTab ? this.route.path : null;
+    },
+    isSignUpPage() {
+      return this.route.path === '/sign_up';
+    },
   },
   methods: {
     openLogin() {
