@@ -25,6 +25,16 @@ const start = async () =>{
     
     await CreateTables(supabase); 
     console.log('Таблицы были созданы');
+
+    const userCount = 30;
+    const { data: insertData, error: insertError } = await supabase
+      .rpc('insert_test_data', { user_count: userCount });
+
+    if (insertError) {
+      console.error('Ошибка при вставке тестовых данных:', insertError);
+      return;
+    }
+    console.log('Тестовые данные успешно вставлены:', insertData);
   }
   catch(error){
     console.log('Ошибка при создании таблиц', error);
