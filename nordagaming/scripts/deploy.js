@@ -1,3 +1,4 @@
+import fs from 'fs';
 import pkg from 'hardhat';
 const { ethers } = pkg;
 
@@ -5,22 +6,30 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
 
-  // Развертывание контракта MockNFT
+  // Развертывание контрактов
   const MockNFT = await ethers.getContractFactory("MockNFT");
-  console.log("Deploying MockNFT...");
   const nftContract = await MockNFT.deploy();
-  await nftContract.waitForDeployment(); // Ждем подтверждения развертывания
-
+  await nftContract.waitForDeployment();
   const nftContractAddress = await nftContract.getAddress();
-  console.log("MockNFT contract deployed to:", nftContractAddress);
 
-  // Развертывание контракта NFTBetting
-  const minimumBet = ethers.parseEther("0.1"); // 0.1 эфира
+  const minimumBet = ethers.parseEther("0.1");
   const NFTBetting = await ethers.getContractFactory("NFTBetting");
   const nftBetting = await NFTBetting.deploy(minimumBet, nftContractAddress);
   await nftBetting.waitForDeployment();
+  const nftBettingAddress = await nftBetting.getAddress();
+
+  // Сохраняем адреса в JSON файл
+  const contractsData = {
+    MockNFT: nftContractAddress,
+    NFTBetting: nftBettingAddress,
+    network: (await ethers.provider.getNetwork()).name
+  };
+
+  fs.writeFileSync('./src/contracts/contract-addresses.json', JSON.stringify(contractsData, null, 2));
   
-  console.log("NFTBetting contract deployed to:", await nftBetting.getAddress());
+  console.log("Contracts deployed and addresses saved:");
+  console.log("- MockNFT:", nftContractAddress);
+  console.log("- NFTBetting:", nftBettingAddress);
 }
 
 main()

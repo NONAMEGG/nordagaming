@@ -28,12 +28,13 @@ contract NFTBetting is IERC721Receiver {
         address winner;
         uint winningAmount;
         bool endedEarly;
+        bool winnerShown; // Флаг, что победитель был показан
     }
 
     mapping(uint => Game) public games;
     mapping(uint => Bet[]) public bets;
     mapping(uint => mapping(address => uint)) public playerContributions;
-    mapping(uint => mapping(address => uint)) public betIndex; // Для быстрого поиска ставок игрока
+    mapping(uint => mapping(address => uint)) public betIndex;
 
     event BetPlaced(address indexed player, uint amount);
     event GameEnded(uint indexed gameId, address winner, uint winningAmount, bool endedEarly);
@@ -69,23 +70,20 @@ contract NFTBetting is IERC721Receiver {
             totalAmount: 0,
             winner: address(0),
             winningAmount: 0,
-            endedEarly: false
+            endedEarly: false,
+            winnerShown: false
         });
-        //bettingEndTime = block.timestamp + BETTING_DURATION;
         gameEnded = false;
         emit NewGameStarted(gameId);
     }
 
     function depositNFT(uint _tokenId) external onlyOwner {
-    require(!nftDeposited, "NFT already deposited");
-    nftContract.safeTransferFrom(msg.sender, address(this), _tokenId);
-    nftId = _tokenId;
-    nftDeposited = true;
-
-    
-    bettingEndTime = block.timestamp + BETTING_DURATION;
-
-    emit NFTDeposited(msg.sender, _tokenId);
+        require(!nftDeposited, "NFT already deposited");
+        nftContract.safeTransferFrom(msg.sender, address(this), _tokenId);
+        nftId = _tokenId;
+        nftDeposited = true;
+        bettingEndTime = block.timestamp + BETTING_DURATION;
+        emit NFTDeposited(msg.sender, _tokenId);
     }
 
     function placeBet() external payable bettingOpen {
@@ -93,17 +91,14 @@ contract NFTBetting is IERC721Receiver {
         
         uint index = betIndex[gameId][msg.sender];
         if (index > 0) {
-            // Обновляем существующую ставку
             bets[gameId][index - 1].amount += msg.value;
         } else {
-            // Добавляем новую ставку
             bets[gameId].push(Bet(msg.sender, msg.value));
             betIndex[gameId][msg.sender] = bets[gameId].length;
         }
         
         games[gameId].totalAmount += msg.value;
         playerContributions[gameId][msg.sender] += msg.value;
-        
         emit BetPlaced(msg.sender, msg.value);
     }
 
@@ -150,7 +145,6 @@ contract NFTBetting is IERC721Receiver {
             payable(owner).transfer(ownerCut);
             
             nftContract.safeTransferFrom(address(this), winner, nftId);
-            
             emit NFTClaimed(winner, nftId);
         } else {
             nftContract.safeTransferFrom(address(this), owner, nftId);
@@ -158,7 +152,16 @@ contract NFTBetting is IERC721Receiver {
         
         nftDeposited = false;
         emit GameEnded(gameId, games[gameId].winner, games[gameId].winningAmount, endedEarly);
+    }
+
+    function startNewGame() external onlyOwner {
+        require(gameEnded, "Current game must be ended first");
+        require(games[gameId].ended, "Game not ended yet");
         
+        // Помечаем что победитель был показан
+        games[gameId].winnerShown = true;
+        
+        // Начинаем новую игру
         gameId++;
         _startNewGame();
     }

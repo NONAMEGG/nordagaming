@@ -287,6 +287,11 @@
         "internalType": "bool",
         "name": "endedEarly",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "winnerShown",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -486,6 +491,13 @@
       }
     ],
     "name": "setMinimumBet",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startNewGame",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
