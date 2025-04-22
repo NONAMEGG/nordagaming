@@ -1,4 +1,6 @@
 // services/ImageService.js
+import { GraphQLClient } from 'graphql-request';
+
 
 export default {
     async fetchCoinImages() {
@@ -19,45 +21,42 @@ export default {
 
         try {
             const CLUSTER_ID = "111";
-            const query = `
-                query GetClusterImages($id: ID!) {
-                cluster(id: $id) {
-                    areas {
-                    imageCID
-                    }
-                }
-                }
-            `;
-
-            const url = new URL('https://api.thegraph.com/subgraphs/name/jsvirin/the-wall');
-            url.searchParams.set('query', query);
-            url.searchParams.set('variables', JSON.stringify({ id: CLUSTER_ID }));
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const { data } = await response.json();
             
-            const images = [];
-            let idCounter = 1;
-
-            data.cluster.areas.forEach(area => {
-                if(area.imageCID?.length > 0) {
-                images.push({
-                    id: idCounter++,
-                    url: `https://thewall.global/api/download/${area.imageCID[0]}`
-                });
+            // 1. Создаем клиент The Graph
+            const client = new GraphQLClient(
+              'https://graph.nordavind.ru/subgraphs/name/the-wall-polygon',
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
                 }
-            });
-
-            return images;
-
+              }
+            );
+      
+            // 2. Определяем GraphQL-запрос
+            const query = `
+              query GetClusterImages($id: ID!) {
+                cluster(id: $id) {
+                  areas {
+                    imageCID
+                  }
+                }
+              }
+            `;
+      
+            // 3. Выполняем запрос через клиент
+            const data = await client.request(query, { id: CLUSTER_ID });
+            
+            // 4. Обрабатываем данные
+            return data.cluster.areas
+              .filter(area => area.imageCID?.length > 0)
+              .map((area, index) => ({
+                id: index + 1,
+                url: `https://thewall.global/api/download/${area.imageCID[0]}`
+              }));
+      
         } catch (error) {
-            console.error('Error fetching cluster images:', error);
+            console.error('GraphQL Error:', error.response?.errors || error.message);
             return mockImages;
         }
     }

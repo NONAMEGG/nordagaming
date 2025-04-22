@@ -52,7 +52,7 @@ export default class MainScene extends Phaser.Scene {
         // this.createGround();
         
         //Игрок
-        this.player = new Player(this, 100, this.cameras.main.height - 150).setDepth(10);
+        this.player = new Player(this, 100, this.cameras.main.height - 150, this.soundManager).setDepth(10);
     
         //Группа врагов
         this.enemies = this.physics.add.group().setDepth(5);

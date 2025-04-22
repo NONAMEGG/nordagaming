@@ -51,7 +51,6 @@ export default class VictoryScene extends Phaser.Scene {
             this.scene.stop('VictoryScene');
             localStorage.removeItem('coinSkins');
             this.scene.start('MainScene');
-            bootScene.soundManager = new SoundManager(bootScene);
                     
             this.scene.start('BootScene');
         });;

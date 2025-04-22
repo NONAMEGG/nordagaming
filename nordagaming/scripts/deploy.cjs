@@ -1,5 +1,7 @@
 // scripts/deploy.js
 const hre = require("hardhat");
+const fs = require('fs');
+const path = require('path');
 
 async function main() {
     const [deployer] = await hre.ethers.getSigners();
@@ -19,6 +21,15 @@ async function main() {
     
     const balance = await hre.ethers.provider.getBalance(contractAddress);
     console.log("Contract balance:", hre.ethers.formatEther(balance), "ETH");
+
+    const configPath = path.join(__dirname, '../src/contracts/contract-address.json');
+    const config = {
+        VictoryReward: contractAddress,
+        network: hre.network.name //сеть для отслеживания
+    };
+    
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    console.log('Адрес контракта сохранён в:', configPath);
 }
 
 main()

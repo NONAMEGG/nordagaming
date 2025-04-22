@@ -4,10 +4,13 @@ export default class UiScene extends Phaser.Scene {
     }
   
     create() {
-        this.scoreText = this.add.text(20, 20, 'Score: 0', {
-            fontSize: '24px',
-            fill: '#fff'
-        });
+        this.scoreText = this.add.text(50, 50, 'Score: 0', {
+            fontSize: '48px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        }).setScrollFactor(0);
+
+        this.scoreText.x = this.game.config.width/2 - this.scoreText.width/2;
     
         this.registry.events.on('changedata', this.updateData, this);
     }

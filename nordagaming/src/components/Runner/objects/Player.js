@@ -1,8 +1,10 @@
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y) {
+    constructor(scene, x, y, soundManager) {
         super(scene, x, y, 'player_run', 0);
         scene.add.existing(this);
         scene.physics.add.existing(this);
+
+        this.soundManager = soundManager;
 
         // Установка якоря в центр спрайта
         this.setOrigin(0.5, 1);
@@ -34,6 +36,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
     
     jump() {
+        this.soundManager.playSound('jumpMusic');
         this.setVelocityY(-1000);
         this.isJumping = true;
     }

@@ -40,7 +40,7 @@ export default class SoundManager {
         }
     }
 
-    // Воспроизведение звукового эффекта (например, прыжка)
+    // Воспроизведение звукового эффекта 
     playSound(key, config = {}) {
         if (!this.soundEnabled) return;
         

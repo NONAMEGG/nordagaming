@@ -18,6 +18,7 @@ import coinImage from '@/components/Runner/assets/images/Coin/coin.png';
 
 import gameMusic from '@/components/Runner/assets/sounds/plaing_song.mp3';
 import PickUpCoinMusic from '@/components/Runner/assets/sounds/coin.mp3';
+import jumpMusic from '@/components/Runner/assets/sounds/jump.mp3'
 
 import SoundManager from '../untils/SoundManager.js';
 import ImageService from '../untils/ImageService.js';
@@ -52,6 +53,7 @@ export default class BootScene extends Phaser.Scene {
     async preload() {
         this.load.audio('gameMusic', [gameMusic]);
         this.load.audio('PickUpCoinMusic', [PickUpCoinMusic]);
+        this.load.audio('jumpMusic', [jumpMusic]);
 
         await this.loadCoinSkins();
 

@@ -11,6 +11,7 @@
     import VictoryScene from './scenes/VictoryScene.js';
     import Web3 from 'web3';
     import VictoryRewardJson from '../../../artifacts/contracts/VictoryReward.sol/VictoryReward.json'
+    import contractData from '@/contracts/contract-address.json'
 
     
     export default {
@@ -27,6 +28,10 @@
                         debug: true,
                         fixedStep: true
                     }
+                },
+                scale: {
+                    mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT,
+                    autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
                 },
                 scene: [BootScene, MainScene, UiScene, GameOverScene, VictoryScene]
             };
@@ -51,13 +56,12 @@
             },
 
             async claimVictoryReward() {
-                console.log(VictoryRewardJson.abi)
                 if (window.ethereum) {
                     try {
                     const web3 = new Web3(window.ethereum);
                     await window.ethereum.enable();
                     
-                    const contractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"; // import from deploy.cjs
+                    const contractAddress = contractData.VictoryReward; // import from deploy.cjs
                     const contractABI = VictoryRewardJson.abi;
                     
                     const contract = new web3.eth.Contract(contractABI, contractAddress);
@@ -78,11 +82,15 @@
     
 <style scoped>
     .game-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
+        width: 100% !important;
+        height: 700px !important;
+        overflow: hidden;
+        margin: 0 auto;
+    }
+
+    /* Отключение масштабирования браузера */
+    body {
+        touch-action: none;
+        zoom: reset;
     }
 </style>

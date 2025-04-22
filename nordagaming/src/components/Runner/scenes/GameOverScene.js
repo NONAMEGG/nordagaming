@@ -60,7 +60,6 @@ export default class GameOverScene extends Phaser.Scene {
             this.scene.stop('GameOverScene');
             this.scene.start('MainScene');
             localStorage.removeItem('coinSkins');
-            bootScene.soundManager = new SoundManager(bootScene);
             
             this.scene.start('BootScene');
         });
