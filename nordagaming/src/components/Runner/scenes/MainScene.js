@@ -24,9 +24,11 @@ export default class MainScene extends Phaser.Scene {
     }
 
     create() {
-        this.availableSkins = this.loadCoinSkins().filter((skin, index, self) => 
-            self.findIndex(s => s.id === skin.id) === index
-        );
+        const existingTextures = this.textures.getTextureKeys().filter(key => key.startsWith('coin_'));
+        existingTextures.forEach(key => this.textures.remove(key));
+
+        // Загружаем скины заново
+        this.availableSkins = this.loadCoinSkins();
 
         this.soundManager = this.scene.get('BootScene').soundManager;
 
@@ -112,9 +114,12 @@ export default class MainScene extends Phaser.Scene {
     loadCoinSkins() {
         const skins = JSON.parse(localStorage.getItem('coinSkins')) || [];
         skins.forEach(skin => {
-          if(!this.textures.exists(`coin_${skin.id}`)) {
-            this.textures.addBase64(`coin_${skin.id}`, skin.data);
-          }
+            const textureKey = `coin_${skin.id}`;
+            if (!this.textures.exists(textureKey)) {
+                this.textures.addBase64(textureKey, skin.data);
+            } else {
+                console.warn(`Texture ${textureKey} already exists, skipping`);
+            }
         });
         return skins;
     }
@@ -143,12 +148,14 @@ export default class MainScene extends Phaser.Scene {
     }
 
     spawnCoin() {
+        if (this.availableSkins.length === 0) return; // Защита от пустого списка
+        
         const x = this.cameras.main.width + Phaser.Math.Between(200, 400);
-        const y = this.cameras.main.height - 250; // Позиция над землей
-
+        const y = this.cameras.main.height - 250;
+    
         const skin = this.availableSkins[this.currentSkinIndex];
         new Coin(this, x, y, this.coinGroup, `coin_${skin.id}`);
-
+    
         this.currentSkinIndex = (this.currentSkinIndex + 1) % this.availableSkins.length;
     }
 

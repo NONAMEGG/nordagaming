@@ -30,8 +30,20 @@ export default class BootScene extends Phaser.Scene {
 
     async loadCoinSkins() {
         try {
+            // Удаляем все текстуры монет из кэша Phaser
+            const textureKeys = this.textures.getTextureKeys().filter(key => key.startsWith('coin_'));
+            textureKeys.forEach(key => this.textures.remove(key));
+
+            // Полная очистка localStorage
+            localStorage.removeItem('coinSkins');
+            
+            // Загрузка новых данных
             const images = await ImageService.fetchCoinImages();
-            const skins = await Promise.all(images.map(async img => {
+            const uniqueImages = images.filter((img, index, self) =>
+                self.findIndex(i => i.id === img.id) === index
+            );
+
+            const skins = await Promise.all(uniqueImages.map(async img => {
                 const response = await fetch(img.url);
                 const blob = await response.blob();
                 return new Promise(resolve => {
@@ -43,7 +55,7 @@ export default class BootScene extends Phaser.Scene {
                     reader.readAsDataURL(blob);
                 });
             }));
-            
+
             localStorage.setItem('coinSkins', JSON.stringify(skins));
         } catch (error) {
             console.error('Failed to load coin skins:', error);
@@ -51,9 +63,12 @@ export default class BootScene extends Phaser.Scene {
     }
   
     async preload() {
+
         this.load.audio('gameMusic', [gameMusic]);
         this.load.audio('PickUpCoinMusic', [PickUpCoinMusic]);
         this.load.audio('jumpMusic', [jumpMusic]);
+
+        localStorage.removeItem('coinSkins');
 
         await this.loadCoinSkins();
 
@@ -103,17 +118,18 @@ export default class BootScene extends Phaser.Scene {
     }
   
     create() {
-
-        // Инициализируем SoundManager
-        if (!this.soundManager) {
-            this.soundManager = new SoundManager(this);
+        // Уничтожаем предыдущий SoundManager
+        if (this.soundManager) {
+            this.soundManager.destroy();
         }
         
-        this.soundManager.initMusic(); //Инициализируем перед использованием
-        
+        // Инициализируем новый SoundManager
+        this.soundManager = new SoundManager(this);
+        this.soundManager.initMusic();
+            
         const startGame = () => {
             this.soundManager.playMusic();
-            this.input.off('pointerdown', startGame);
+            this.scene.stop('BootScene');
             this.scene.start('MainScene');
         };
 

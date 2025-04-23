@@ -57,10 +57,17 @@ export default class GameOverScene extends Phaser.Scene {
 
         restartText.setInteractive();
         restartText.on('pointerdown', () => {
-            this.scene.stop('GameOverScene');
-            this.scene.start('MainScene');
-            localStorage.removeItem('coinSkins');
+            // Корректная остановка звуков через SoundManager
+            const bootScene = this.scene.get('BootScene');
+            if (bootScene.soundManager) {
+                bootScene.soundManager.destroy();
+            }
+        
+            // Остановка всех активных сцен
+            this.scene.stop('MainScene');
+            this.scene.stop('GameOverScene'); // или VictoryScene
             
+            // Полный перезапуск игры через BootScene
             this.scene.start('BootScene');
         });
     }

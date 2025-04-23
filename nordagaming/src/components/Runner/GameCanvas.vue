@@ -83,7 +83,7 @@
 <style scoped>
     .game-container {
         width: 100% !important;
-        height: 700px !important;
+        /* height: 700px !important; */
         overflow: hidden;
         margin: 0 auto;
     }

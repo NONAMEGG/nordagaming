@@ -2,6 +2,7 @@ export default class SoundManager {
     constructor(scene) {
         this.scene = scene;
         this.music = null;
+        this.sounds = [];
         this.soundEnabled = true;
         this._musicConfig = {
             loop: true,
@@ -48,6 +49,7 @@ export default class SoundManager {
             volume: 1,
             ...config
         });
+        this.sounds.push(sound);
         sound.play();
         return sound;
     }
@@ -61,5 +63,23 @@ export default class SoundManager {
             this.playMusic();
         }
         return this.soundEnabled;
+    }
+
+    destroy() {
+        if (this.music) {
+            this.music.stop();
+            this.music.destroy();
+        }
+        this.sounds.forEach(sound => {
+            sound.stop();
+            sound.destroy();
+        });
+        this.sounds = []; // Очищаем массив
+    }
+
+    reset() {
+        if (this.music) this.music.stop();
+        this.sounds.forEach(sound => sound.stop());
+        this.sounds = []; // Используем присваивание вместо clear()
     }
 }
