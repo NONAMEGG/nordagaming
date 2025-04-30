@@ -4,6 +4,14 @@
       <v-card-title class="text-h5">Sign Up</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="valid">
+          <v-file-input
+            v-model="avatar"
+            label="Avatar"
+            accept="image/png, image/jpeg, image/bmp"
+            class="cursor-pointer"
+            placeholder="Pick an avatar"
+            prepend-icon="mdi-camera"
+          ></v-file-input>
           <v-text-field
             v-model="login"
             label="Username"
@@ -44,6 +52,7 @@ const router = useRouter();
 
 const login = ref('');
 const email = ref('');
+const avatar = ref('')
 const password = ref('');
 const valid = ref(false);
 const form = ref(null);
@@ -57,13 +66,15 @@ const rules = {
 
 async function register() {
   try{
-    const response = await registration(login.value, email.value, password.value);
+    console.log(avatar)
+    const response = await registration(login.value, email.value, password.value, avatar.value);
     console.log(response);
     if (await form.value?.validate()) {
       await userStore.updateProfile({
         id: response.data.id,
         name: response.data.name,
         email: response.data.email,
+        avatar: response.data.avatar_url
       });
       router.push('/');
     }

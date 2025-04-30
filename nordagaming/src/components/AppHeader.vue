@@ -78,7 +78,7 @@
               overlap
             >
               <v-avatar size="40">
-                <v-img :src="user.avatar"></v-img>
+                <v-img :src="user.users.avatar_url"></v-img>
               </v-avatar>
             </v-badge>
           </template>
@@ -190,7 +190,7 @@ export default {
   },
 };
 </script>
-  
+
 <style>
 .header-side {
   z-index: 2;

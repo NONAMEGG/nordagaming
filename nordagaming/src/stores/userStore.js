@@ -25,6 +25,9 @@ export const useUserStore = defineStore("user", {
       if (updatedData.email !== undefined && updatedData.email !== null) {
         this.user.email = updatedData.email;
       }
+      if(updatedData.avatar){
+        this.user.avatar = updatedData.avatar;
+      }
       //if (
       //  updatedData.password !== undefined &&
       //  updatedData.password !== null &&

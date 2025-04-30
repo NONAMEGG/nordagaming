@@ -24,7 +24,8 @@ class RecordService{
         id,
         total_score,
         users (
-          name
+          name,
+          avatar_url
         )
       `)
       .order('total_score', { ascending: false })

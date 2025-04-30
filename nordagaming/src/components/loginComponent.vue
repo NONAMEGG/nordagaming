@@ -6,7 +6,7 @@
                 <v-form ref="form" v-model="valid">
                     <v-text-field
                         v-model="identifier"
-                        label="Email or Username"
+                        label="Email"
                         :rules="[rules.required, rules.emailOrUsername]"
                         required
                     ></v-text-field>
@@ -86,6 +86,7 @@ export default {
               id: response.data.id,
               name: response.data.name,
               email: response.data.email,
+              avatar: response.data.avatar_url
             });
             router.push('/');
           }catch(error){

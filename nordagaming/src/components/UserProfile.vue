@@ -41,6 +41,15 @@
           </v-list-item>
           <v-list-item v-else>
             <div>
+              <v-file-input
+                v-model="newAvatar"
+                label="Avatar"
+                accept="image/png, image/jpeg, image/bmp"
+                class="cursor-pointer"
+                placeholder="Pick an avatar"
+                prepend-icon="mdi-camera"
+              ></v-file-input>
+
               <v-text-field v-model="newLogin" label="Login"></v-text-field>
 
               <v-text-field
@@ -81,6 +90,8 @@ import { useUserStore } from '../stores/userStore';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import avatarImage from '@/assets/logo.png';
+import { update } from '../http/userAPI.js';
+
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -88,27 +99,44 @@ const showEditState = ref(false);
 const newLogin = ref('');
 const newEmail = ref('');
 const newPassword = ref('');
+const newAvatar = ref('');
+
+const validationPassword = () =>{
+  return newPassword.value.length > 5 && /\d/.test(newPassword.value)
+}
+
+const validationEmail = () =>{
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(newEmail.value);
+}
 
 const isPasswordValid = computed(() => {
   if (!newPassword.value) {
     return true;
   }
-  return newPassword.value.length > 5 && /\d/.test(newPassword.value);
+  return validationPassword();
 });
 
 const isEmailValid = computed(() => {
   if (!newEmail.value) {
     return true;
   }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(newEmail.value);
+  return validationEmail()
 });
 
 const isSaveButtonDisabled = computed(() => {
-  return showEditState.value && ((newEmail.value !== '' && !isEmailValid.value) || (newPassword.value !== '' && !isPasswordValid.value));
+  if(newEmail.value && !validationEmail()){
+    return true
+  }
+  if(newPassword.value && !validationPassword()){
+    return true
+  }
+  if(!(newEmail.value || newAvatar.value || newPassword.value || newLogin.value)){
+    return true
+  }
 });
 
-const saveProfileChanges = () => {
+const saveProfileChanges = async () => {
   if (showEditState.value && (newEmail.value !== '' && !isEmailValid.value)) {
     return;
   }
@@ -118,15 +146,8 @@ const saveProfileChanges = () => {
 
   const updatedData = {};
 
-  if (newLogin.value !== '') {
-    updatedData.name = newLogin.value;
-  }
-  if (newEmail.value !== '') {
-    updatedData.email = newEmail.value;
-  }
-  if (newPassword.value !== '') {
-    updatedData.password = newPassword.value;
-  }
+  const response = await update(newLogin.value, newEmail.value, newPassword.value, newAvatar.value);
+  console.log(response);
 
   userStore.updateProfile(updatedData);
 
