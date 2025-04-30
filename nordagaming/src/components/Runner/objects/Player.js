@@ -23,21 +23,38 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         // Управление
         this.cursors = scene.input.keyboard.createCursorKeys();
+
+        this.jumpCount = 0;
+        this.jumpKeyReleased = true;
     }
     
     update() {
-        if (this.body.onFloor()) {
-            this.isJumping = false;
+        const isJumpPressed = this.cursors.space.isDown || this.cursors.up.isDown;
+
+        if (isJumpPressed) {
+            if (this.jumpKeyReleased && this.jumpCount < 2) {
+                this.jump();
+                this.jumpKeyReleased = false;
+            }
+        } else {
+            this.jumpKeyReleased = true;
         }
-        
-        if ((this.cursors.space.isDown || this.cursors.up.isDown) && !this.isJumping) {
-            this.jump();
+
+        if (this.body.onFloor() && this.jumpCount === 2) {
+            this.isJumping = false;
+            this.jumpCount = 0;
         }
     }
-    
+
     jump() {
+        if (this.jumpCount >= 2) return;
+
         this.soundManager.playSound('jumpMusic');
+        this.setVelocityY(0);
+        
         this.setVelocityY(-1000);
+        
         this.isJumping = true;
+        this.jumpCount++;
     }
 }

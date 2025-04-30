@@ -38,7 +38,7 @@ export default class VictoryScene extends Phaser.Scene {
         const restartText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY + 100,
-            'Click to restart',
+            'Click to menu',
             { 
                 fontSize: '24px',
                 fill: '#ffffff',

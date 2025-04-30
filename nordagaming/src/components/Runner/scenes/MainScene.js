@@ -15,20 +15,17 @@ export default class MainScene extends Phaser.Scene {
         this.score = 0; 
         this.currentSkinIndex = 0;
         this.coinsCollected = 0;
-        this.gameSpeed = 4;
-        this.gameMaxSpeed = 5;
+        this.gameSpeed = 5;
+        this.gameMaxSpeed = 8;
         this.acceleration = 0.0001;
         this.enemies = this.add.group();
-        this.nextCoinThreshold = 1; //5
-        this.nextCoinThrough = 1;  //10
+        this.nextCoinThreshold = 15; //5
+        this.nextCoinThrough = 20;  //10
     }
 
     create() {
         const existingTextures = this.textures.getTextureKeys().filter(key => key.startsWith('coin_'));
         existingTextures.forEach(key => this.textures.remove(key));
-
-        // Загружаем скины заново
-        this.availableSkins = this.loadCoinSkins();
 
         this.soundManager = this.scene.get('BootScene').soundManager;
 
@@ -51,7 +48,6 @@ export default class MainScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
-        // this.createGround();
         
         //Игрок
         this.player = new Player(this, 100, this.cameras.main.height - 150, this.soundManager).setDepth(10);
@@ -96,7 +92,7 @@ export default class MainScene extends Phaser.Scene {
 
         // Увеличение скорости до максимальной
         if (this.gameSpeed < this.gameMaxSpeed) {
-            this.gameSpeed += this.acceleration; // Настройте значение ускорения
+            this.gameSpeed += this.acceleration;
         }
 
         // Ограничиваем скорость максимумом
@@ -234,68 +230,47 @@ export default class MainScene extends Phaser.Scene {
     }
 
     spawnEnemy() {
-        const lastEnemy = this.getLastEnemy();
-        const minDistanceBetweenWaves = 500;
+        const rightmostEnemy = this.getRightmostEnemy();
         
+        const baseWaveSpacing = 65;
+        const waveSpacing = baseWaveSpacing * this.gameSpeed;
+        
+        if (rightmostEnemy) {
+            const rightmostEdge = rightmostEnemy.x + rightmostEnemy.width;
+            const spawnThreshold = this.cameras.main.width - waveSpacing;
+            if (rightmostEdge > spawnThreshold) {
+                const distanceToMove = rightmostEdge - spawnThreshold;
+                const delay = (distanceToMove / this.gameSpeed) * 1000; // Время в мс
+                this.time.delayedCall(delay, this.spawnEnemy, [], this);
+                return;
+            }
+        }
+    
         const random = Phaser.Math.Between(1, 100);
         let enemyCount;
-        if (random <= 50) {         // 50% на 1 врага
-            enemyCount = 1;
-        } else if (random <= 80) {  // 30% на 2 врагов
-            enemyCount = 2;
-        } else {                    // 20% на 3 врагов
-            enemyCount = 3;
-        }
-    
-        // Если последний враг ещё слишком близко - откладываем спавн
-        if (lastEnemy && lastEnemy.x > this.cameras.main.width - minDistanceBetweenWaves) {
-            this.time.delayedCall(300, this.spawnEnemy, [], this);
-            return;
-        }
+        if (random <= 50) enemyCount = 1;
+        else if (random <= 80) enemyCount = 2;
+        else enemyCount = 3;
     
         const groundY = this.cameras.main.height - 200;
-        let prevX = this.cameras.main.width + 100;
-    
-        // Выбор множителя расстояния в зависимости от количества врагов
-        let distanceMultiplier;
-        switch(enemyCount) {
-            case 1:
-                distanceMultiplier = this.gameSpeed * 0.35;
-                break;
-            case 2:
-                distanceMultiplier = this.gameSpeed * 0.25;
-                break;
-            case 3:
-                distanceMultiplier = this.gameSpeed * 0.1;
-                break;
-            default:
-                distanceMultiplier = 1;
-        }
+        let currentX = this.cameras.main.width + 150;
     
         for (let i = 0; i < enemyCount; i++) {
-            // Динамическое расстояние с учетом множителя
-            const baseDistance = Phaser.Math.Between(150, 200);
-            const dynamicDistance = baseDistance * distanceMultiplier;
-            
-            const x = prevX + dynamicDistance;
-            new Enemy(this, x, groundY, this.enemies);
-            prevX = x;
+            if (i > 0) {
+                const spacing = Phaser.Math.Between(50, 150);
+                currentX += spacing;
+            }
+            new Enemy(this, currentX, groundY, this.enemies);
         }
     
-        // Настройка задержки следующего спавна
         const baseDelay = Phaser.Math.Between(2000, 4000);
-        const scaledDelay = baseDelay / Math.max(1, this.gameSpeed / 5);
-        this.time.delayedCall(scaledDelay, this.spawnEnemy, [], this);
+        const speedAdjustedDelay = baseDelay / this.gameSpeed;
+        this.time.delayedCall(speedAdjustedDelay, this.spawnEnemy, [], this);
     }
     
-    getLastEnemy() {
-        let lastEnemy = null;
-        this.enemies.getChildren().forEach(enemy => {
-            if (!lastEnemy || enemy.x > lastEnemy.x) {
-                lastEnemy = enemy;
-            }
-        });
-        return lastEnemy;
+    getRightmostEnemy() {
+        return this.enemies.getChildren().reduce((max, enemy) => 
+            enemy.x > (max?.x || 0) ? enemy : max, null);
     }
 
     handlePlayerEnemyCollision(player, enemy) {
