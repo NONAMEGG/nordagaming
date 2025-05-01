@@ -1,10 +1,17 @@
 <template>
   <AppHeader @show-login-dialog="loginDialog = true" @show-signup-page="goToSignUp" />
   <loginComponent v-model="loginDialog" />
-  <v-main class="blur-background">
+  <v-main :class="theme.global.current.value.dark ?  'blur-background' : 'blur-backgroundlight'">
     <router-view />
   </v-main>
 </template>
+
+
+<script setup>
+import { useTheme } from 'vuetify'
+const theme = useTheme();
+
+</script>
 
 <script>
 import AppHeader from "@/components/AppHeader.vue";
@@ -26,14 +33,14 @@ export default {
 </script>
 
 <style>
-  .blur-background {
+  .blur-background, .blur-backgroundlight {
   background: url('/src/assets/main_bg.png') center center;
   background-size: cover;
   position: relative;
   overflow: hidden;
 }
 
-.blur-background::before {
+.blur-background::before, .blur-backgroundlight::before {
   content: '';
   position: absolute;
   top: 0;
@@ -56,7 +63,7 @@ export default {
   z-index: 2;
 }
 
-.blur-background > * {
+.blur-background > *, .blur-backgroundlight > * {
   position: relative;
   z-index: 3;
 }

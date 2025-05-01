@@ -105,9 +105,9 @@ const isEmailValid = computed(() => {
 });
 
 const isSaveButtonDisabled = computed(() => {
-  return showEditState.value && ((newEmail.value !== '' && !isEmailValid.value) || (newPassword.value !== '' && !isPasswordValid.value));
+  return showEditState.value && ((newEmail.value !== '' && !isEmailValid.value) || (newPassword.value !== '' && !isPasswordValid.value)
+   || (newLogin.value === '' && newEmail.value === '' && newPassword.value === ''));
 });
-
 const saveProfileChanges = () => {
   if (showEditState.value && (newEmail.value !== '' && !isEmailValid.value)) {
     return;

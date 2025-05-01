@@ -1,7 +1,6 @@
 <template>
   <div class="game-timer">
     <h2>⏳ До окончания приёма ставок:</h2>
-
     <p v-if="!nftDeposited">🔒 Игра ещё не началась. Ожидается депозит NFT...</p>
     <p v-else-if="timeLeft">{{ timeLeft }}</p>
     <p v-else>Загрузка таймера...</p>
@@ -12,11 +11,11 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { ethers } from 'ethers'
 import contractABI from '../../contracts/nftBetting.json'
+import contractAddresses from '../../contracts/contract-addresses.json' // Импортируем адреса
 
 const timeLeft = ref('')
 const bettingEndTime = ref(0)
 const nftDeposited = ref(false)
-const NFT_BETTING_ADDRESS = '0x851356ae760d987E095750cCeb3bC6014560891C'
 
 let contract
 let timerInterval
@@ -24,16 +23,27 @@ let refreshInterval
 
 const loadContract = async () => {
   try {
+    if (!window.ethereum) throw new Error('MetaMask не установлен')
+    
     const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = await provider.getSigner()
-    contract = new ethers.Contract(NFT_BETTING_ADDRESS, contractABI, signer)
+    
+    // Используем адрес из JSON файла
+    contract = new ethers.Contract(
+      contractAddresses.NFTBetting, 
+      contractABI, 
+      signer
+    )
   } catch (err) {
     console.error('Ошибка инициализации контракта:', err)
+    throw err // Можно обработать ошибку в компоненте выше
   }
 }
 
 const fetchGameState = async () => {
-  if (!contract) return
+  if (!contract) {
+    await loadContract()
+  }
 
   try {
     const [endTime, isDeposited] = await Promise.all([
@@ -63,15 +73,21 @@ const updateTimer = () => {
     timeLeft.value = `${minutes} мин ${seconds} сек`
   } else {
     timeLeft.value = '⛔ Время вышло'
+    clearInterval(timerInterval)
   }
 }
 
 onMounted(async () => {
-  await loadContract()
-  await fetchGameState()
+  try {
+    await loadContract()
+    await fetchGameState()
 
-  timerInterval = setInterval(updateTimer, 1000)
-  refreshInterval = setInterval(fetchGameState, 5000)
+    timerInterval = setInterval(updateTimer, 1000)
+    refreshInterval = setInterval(fetchGameState, 5000)
+  } catch (error) {
+    console.error('Ошибка инициализации:', error)
+    timeLeft.value = 'Ошибка подключения к контракту'
+  }
 })
 
 onUnmounted(() => {
