@@ -1,14 +1,30 @@
 <template>
-      <v-container class="fill-height">
-    <v-responsive
-      class="align-center fill-height mx-auto"
-      max-width="900"
-    >
-    <div class="text-center">
-        <div class="text-body-3 font-weight-light mb-n1">Welcome to</div>
-
-        <h1 class="text-h2 font-weight-bold">Runner</h1>
-      </div>
-  </v-responsive>
-    </v-container>
+    <div>
+        <GameCanvas @update-score="handleUpdateScore" @update-coins="handleUpdateCoins"/>
+    </div>
 </template>
+
+<script>
+    import GameCanvas from '@/components/Runner/GameCanvas.vue';
+    export default {
+        components: { GameCanvas },
+        data() {
+            return {
+                score: 0,
+                totalCoins: 0
+            };
+        },
+        methods: {
+            handleUpdateScore(newScore) {
+                this.score = newScore;
+                localStorage.setItem('score', newScore);
+            },
+        },
+        mounted() {
+            this.score = parseInt(localStorage.getItem('score')) || 0;
+        }
+    };
+</script>
+
+<style scoped>
+</style>
