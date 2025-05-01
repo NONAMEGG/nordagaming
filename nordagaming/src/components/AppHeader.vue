@@ -80,12 +80,13 @@
               color="amber"
               overlap
             >
-              <v-avatar size="40">
-                <v-img :src="user.users.avatar_url"></v-img>
+             <v-avatar size="40" class="mr-2">
+                      <v-img :src="user.users.avatar_url" v-if="user.users.avatar_url"/>
+                      <v-icon v-else icon="mdi-account-circle"></v-icon>
               </v-avatar>
             </v-badge>
           </template>
-          <v-list-item-title>{{ user.name }}</v-list-item-title>
+          <v-list-item-title>{{ user.users.name }}</v-list-item-title>
           <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
         </v-list-item>
       </v-list>

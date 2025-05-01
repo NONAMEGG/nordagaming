@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { supabase } from '../utils/supabase.js';
 import fs from 'fs'
+import { subscribe } from 'diagnostics_channel';
 
 class AuthService{
   async registration(name, email, password, avatar){
@@ -66,7 +67,8 @@ class AuthService{
       id: data[0].id,
       name: data[0].name, 
       email: data[0].email,
-      avatar_url: avatar_url
+      avatar_url: avatar_url,
+      total_score: 0
     };
   }
 
@@ -82,11 +84,20 @@ class AuthService{
     if(!verificy){
       throw Error('Неверный пароль');
     }
+    const {data: dataScore, error: errorScore} = await supabase
+      .from('records')
+      .select('total_score')
+      .eq('user_id', data[0].id)
+    if(errorScore){ 
+      console.log(errorScore.message);
+      throw Error('Ошибка при получении очков пользователя');
+    }
     return {
       id: data[0].id,
       name: data[0].name, 
       email: data[0].email,
-      avatar_url: data[0].avatar_url
+      avatar_url: data[0].avatar_url,
+      total_score: dataScore[0].total_score
     }
   }
 

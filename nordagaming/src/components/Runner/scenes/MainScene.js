@@ -2,17 +2,20 @@ import Player from '@/components/Runner/objects/Player';
 import Enemy from '@/components/Runner/objects/Enemy';
 import GroundManager from '../objects/GroundManager';
 import Coin from '../objects/Coins';
+import { useUserStore } from '../../../stores/userStore'
+
+const userStore = useUserStore();
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MainScene' });
-        this.groundTiles = []; 
-        this.backgrounds = []; 
+        this.groundTiles = [];
+        this.backgrounds = [];
         this.vueContext = null; //для хранения контекста
     }
 
     init() {
-        this.score = 0; 
+        this.score = 0;
         this.currentSkinIndex = 0;
         this.coinsCollected = 0;
         this.gameSpeed = 1;
@@ -37,7 +40,7 @@ export default class MainScene extends Phaser.Scene {
         this.createBackground();
 
         this.groundManager = new GroundManager(this);
-        
+
 
         this.anims.create({
             key: 'run',
@@ -50,13 +53,13 @@ export default class MainScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
-        
+
         //Игрок
         this.player = new Player(this, 100, this.cameras.main.height - 150, this.soundManager).setDepth(10);
-    
+
         //Группа врагов
         this.enemies = this.physics.add.group().setDepth(5);
-    
+
         this.spawnEnemy(); // Первый спавн сразу
         this.spawnTimer = this.time.addEvent({
             delay: 2000,       // Начальная задержка
@@ -67,14 +70,14 @@ export default class MainScene extends Phaser.Scene {
 
 
         this.coinGroup = this.physics.add.group({
-            allowGravity: false, 
+            allowGravity: false,
             immovable: true
         }).setDepth(5);
 
         this.availableSkins = this.loadCoinSkins();
         this.collectedSkins = new Set();
-        
-        
+
+
         this.setupCollisions();
     }
 
@@ -83,13 +86,13 @@ export default class MainScene extends Phaser.Scene {
         this.groundManager.update(this.gameSpeed * 1.5);
 
         this.physics.world.collide(this.player, this.enemies);
-                
+
         this.player.update();
         this.enemies.getChildren().forEach(enemy => enemy.update(this.gameSpeed));
 
         this.spawnCoinIfNeeded();
         this.coinGroup.getChildren().forEach(coin => coin.update(this.gameSpeed));
-        
+
         this.incrementScore();
 
         // Увеличение скорости до максимальной
@@ -99,8 +102,8 @@ export default class MainScene extends Phaser.Scene {
 
         // Ограничиваем скорость максимумом
         this.gameSpeed = Phaser.Math.Clamp(
-            this.gameSpeed, 
-            4, 
+            this.gameSpeed,
+            4,
             this.gameMaxSpeed
         );
     }
@@ -126,13 +129,13 @@ export default class MainScene extends Phaser.Scene {
         coin.destroy();
         this.coinsCollected++;
         this.registry.set('coins', this.coinsCollected);
-        this.soundManager.playSound('PickUpCoinMusic'); 
-    
+        this.soundManager.playSound('PickUpCoinMusic');
+
         const textureKey = coin.texture.key;
         if (!textureKey.startsWith('coin_')) return; // Пропускаем базовые монеты
 
         if (this.coinsCollected === this.availableSkins.length) {
-            this.scene.start('VictoryScene', { 
+            this.scene.start('VictoryScene', {
                 coins: this.coinsCollected,
                 vueContext: this.vueContext
             });
@@ -142,19 +145,19 @@ export default class MainScene extends Phaser.Scene {
     spawnCoinIfNeeded() {
         if (this.score >= this.nextCoinThreshold) {
             this.spawnCoin();
-            this.nextCoinThreshold += this.nextCoinThrough; 
+            this.nextCoinThreshold += this.nextCoinThrough;
         }
     }
 
     spawnCoin() {
         if (this.availableSkins.length === 0) return; // Защита от пустого списка
-        
+
         const x = this.cameras.main.width + Phaser.Math.Between(200, 400);
         const y = this.cameras.main.height - 250;
-    
+
         const skin = this.availableSkins[this.currentSkinIndex];
         new Coin(this, x, y, this.coinGroup, `coin_${skin.id}`);
-    
+
         this.currentSkinIndex = (this.currentSkinIndex + 1) % this.availableSkins.length;
     }
 
@@ -164,7 +167,7 @@ export default class MainScene extends Phaser.Scene {
         if (this.playerGroundCollider) {
             this.physics.world.removeCollider(this.playerGroundCollider);
         }
-    
+
         // Создаем новые коллайдеры
         this.playerGroundCollider = this.physics.add.collider(
             this.player,
@@ -184,14 +187,14 @@ export default class MainScene extends Phaser.Scene {
             null,
             this
         );
-    
+
         // Коллайдер для врагов
         this.physics.add.collider(
             this.enemies,
             this.groundManager.getCollisionGroup()
         );
 
-        // Коллайдер монет с игроком 
+        // Коллайдер монет с игроком
         this.physics.add.overlap(
             this.player,
             this.coinGroup,
@@ -205,7 +208,7 @@ export default class MainScene extends Phaser.Scene {
         // Создаем 3 фона для плавного перехода
         this.backgrounds = [];
         const bgWidth = this.textures.get('background').getSourceImage().width;
-        
+
         for (let i = 0; i < 3; i++) {
             const bg = this.add.image(bgWidth * i, 0, 'background')
                 .setOrigin(0, 0)
@@ -214,17 +217,17 @@ export default class MainScene extends Phaser.Scene {
             this.backgrounds.push(bg);
         }
     }
-    
+
     moveBackground() {
         const speed = this.gameSpeed * 2;
         const bgWidth = this.backgrounds[0].width;
-    
+
         this.backgrounds.forEach(bg => {
             bg.x -= speed * 0.2;
-            
+
             // Если фон ушел за экран - перемещаем его в конец цепочки
             if (bg.x <= -bgWidth) {
-                const lastBg = this.backgrounds.reduce((prev, current) => 
+                const lastBg = this.backgrounds.reduce((prev, current) =>
                     (current.x > prev.x) ? current : prev
                 );
                 bg.x = lastBg.x + bgWidth;
@@ -234,9 +237,9 @@ export default class MainScene extends Phaser.Scene {
 
     spawnEnemy() {
         const rightmostEnemy = this.getRightmostEnemy();
-        
+
         const waveSpacing = this.baseWaveSpacing * this.gameSpeed;
-        
+
         if (rightmostEnemy) {
             const rightmostEdge = rightmostEnemy.x + rightmostEnemy.width;
             const spawnThreshold = this.cameras.main.width - waveSpacing;
@@ -247,16 +250,16 @@ export default class MainScene extends Phaser.Scene {
                 return;
             }
         }
-    
+
         const random = Phaser.Math.Between(1, 100);
         let enemyCount;
         if (random <= 50) enemyCount = 1;
         else if (random <= 80) enemyCount = 2;
         else enemyCount = 3;
-    
+
         const groundY = this.cameras.main.height - 100;
         let currentX = this.cameras.main.width + 200;
-    
+
         for (let i = 0; i < enemyCount; i++) {
             if (i > 0) {
                 const spacing = Phaser.Math.Between(50, 150);
@@ -264,30 +267,30 @@ export default class MainScene extends Phaser.Scene {
             }
             new Enemy(this, currentX, groundY, this.enemies);
         }
-    
+
         const baseDelay = Phaser.Math.Between(2000, 4000);
         const speedAdjustedDelay = baseDelay / this.gameSpeed;
         this.time.delayedCall(speedAdjustedDelay, this.spawnEnemy, [], this);
     }
-    
+
     getRightmostEnemy() {
-        return this.enemies.getChildren().reduce((max, enemy) => 
+        return this.enemies.getChildren().reduce((max, enemy) =>
             enemy.x > (max?.x || 0) ? enemy : max, null);
     }
 
     handlePlayerEnemyCollision(player, enemy) {
         this.physics.pause();
-        
+
         player.setActive(false).setVisible(false);
-        
+
         this.time.removeAllEvents();
-        
-        this.scene.launch('GameOverScene', { 
-            score: Math.floor(this.score) 
+
+        this.scene.launch('GameOverScene', {
+            score: Math.floor(this.score)
         });
-        
+
         this.scene.pause();
-        
+
     }
 
     incrementScore() {

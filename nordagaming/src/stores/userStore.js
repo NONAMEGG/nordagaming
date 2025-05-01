@@ -9,11 +9,13 @@ export const useUserStore = defineStore("user", {
       email: "john.doe@example.com",
       avatar: avatarImage,
       wallet: "walletnum1231350dko3dkK@)3",
-      currentPoints: 10,
+      currentPoints: 1024,
       password: "",
     },
   }),
   getters: {
+    getCurrentPoints: (state) =>
+      state.user.currentPoints,
     getUserId: (state) =>
       state.user.id,
     isAuthenticated: (state) =>
@@ -33,13 +35,9 @@ export const useUserStore = defineStore("user", {
       if(updatedData.avatar){
         this.user.avatar = updatedData.avatar;
       }
-      //if (
-      //  updatedData.password !== undefined &&
-      //  updatedData.password !== null &&
-      //  updatedData.password !== ""
-      //) {
-      //  this.user.password = updatedData.password;
-      //}
+      if(updatedData.total_score){
+        this.user.currentPoints = updatedData.total_score;
+      }
       console.log("Profile updated:", this.user);
     },
     reset() {
