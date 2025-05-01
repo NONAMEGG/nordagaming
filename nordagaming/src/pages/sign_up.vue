@@ -68,7 +68,7 @@ async function register() {
   try{
     console.log(avatar)
     const response = await registration(login.value, email.value, password.value, avatar.value);
-    console.log(response);
+    console.log(response.data.id);
     if (await form.value?.validate()) {
       await userStore.updateProfile({
         id: response.data.id,

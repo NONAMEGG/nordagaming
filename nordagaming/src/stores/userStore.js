@@ -14,11 +14,16 @@ export const useUserStore = defineStore("user", {
     },
   }),
   getters: {
+    getUserId: (state) =>
+      state.user.id,
     isAuthenticated: (state) =>
       !!state.user.name && !!state.user.email /*&& !!state.user.password*/,
   },
   actions: {
     updateProfile(updatedData) {
+      if(updatedData.id){
+        this.user.id = updatedData.id;
+      }
       if (updatedData.name !== undefined && updatedData.name !== null) {
         this.user.name = updatedData.name;
       }
@@ -35,7 +40,6 @@ export const useUserStore = defineStore("user", {
       //) {
       //  this.user.password = updatedData.password;
       //}
-
       console.log("Profile updated:", this.user);
     },
     reset() {

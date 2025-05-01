@@ -80,7 +80,7 @@ export default {
         async loginUser(){
           try{
             const response = await login(this.identifier, this.password);
-            console.log(response);
+            console.log(response.data.id);
             this.closeDialog();
             await userStore.updateProfile({
               id: response.data.id,

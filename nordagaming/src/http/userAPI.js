@@ -24,18 +24,29 @@ export const login = async (email, password) => {
   return response;
 }
 
-export const update = async (name, email, password, avatar) =>{
+export const update = async (id, name, email, password, avatar) =>{
   const formData = new FormData();
 
-  formData.append('name', name);
-  formData.append('email', email);
-  formData.append('password', password);
+  formData.append('id', id)
+  if(name){
+    formData.append('name', name);
+  }
+  if(email){
+    formData.append('email', email);
+  }
+  if(password){
+    formData.append('password', password);
+  }
   if(avatar){
     formData.append('avatar', avatar);
     console.log(avatar)
   }
 
-  const response = await host.post('/api/user/update', formData, {
+  formData.forEach((val, key) => {
+    console.log(`${key}:`, val);
+  });
+
+  const response = await host.put('/api/user/update', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

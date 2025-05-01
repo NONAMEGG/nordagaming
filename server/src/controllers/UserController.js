@@ -41,10 +41,10 @@ class UserController{
   async update(req, res){
     try{
       console.log(req.body)
-      const {name, email, password} = req.body;
+      const {id, name, email, password} = req.body;
       const file = req.file;
-      const user = await AuthService.update(name, email, password, file);
-      console.log('Данные успешно обновлены') 
+      const user = await AuthService.update(id, name, email, password, file);
+      console.log('Данные успешно обновлены', user) 
       res.json(user);
     }catch(error){
       console.log('Ошибка при обновлении', error);

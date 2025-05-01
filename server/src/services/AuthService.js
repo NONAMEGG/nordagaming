@@ -90,8 +90,8 @@ class AuthService{
     }
   }
 
-  async update(name, email, password, avatar){
-    let newData = new Map();
+  async update(id, name, email, password, avatar){
+    let newData = {};
 
     if(email){
       const {data: person_data, error: person_error} = await supabase
@@ -106,10 +106,11 @@ class AuthService{
         const {data, error} = await supabase
           .from('users')
           .update({email: email})
+          .eq('id', id)
         if(error){
           throw Error('Ошибка при обновлении почты пользователя');
         }
-        newData.set('email', email)
+        newData['email'] = email;
       }
     }
     if(avatar){
@@ -147,10 +148,11 @@ class AuthService{
       const {data, error} = await supabase
         .from('users')
         .update({avatar_url: avatar_url})
+        .eq('id', id)
       if(error){
         throw Error('Ошибка при обновлении почты пользователя');
       }
-      newData.set('avatar_url', avatar_url)
+      newData['avatar_url'] = avatar_url;
     }
     
     if(password){
@@ -158,20 +160,22 @@ class AuthService{
       const {data, error} = await supabase.from('users').update({
         password: hashedpassword
       })
+      .eq('id', id)
       if(error){
         throw Error('Ошибка при добавлении пользователя в базу: ', error)
       }
-      newData.set('password', hashedpassword)
+      newData['password'] = hashedpassword;
     }
 
     if(name){
       const {data, error} = await supabase.from('users').update({
         name: name
       })
+      .eq('id', id)
       if(error){
-        throw Error('Ошибка при добавлении пользователя в базу: ', error)
+        throw Error('Ошибка при обновлении пользователя в базе: ', error.message)
       }
-      newData.set('name', name)
+      newData['name'] = name;
     }
 
     return {

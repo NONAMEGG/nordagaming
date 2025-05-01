@@ -146,8 +146,20 @@ const saveProfileChanges = async () => {
 
   const updatedData = {};
 
-  const response = await update(newLogin.value, newEmail.value, newPassword.value, newAvatar.value);
+  console.log('айдишник', userStore.getUserId)
+
+  const response = await update(
+    userStore.getUserId,
+    newLogin.value,
+    newEmail.value,
+    newPassword.value,
+    newAvatar.value
+  );
   console.log(response);
+
+  for (const [key, value] of Object.entries(response.data)) {
+    updatedData[key] = value;
+  }
 
   userStore.updateProfile(updatedData);
 

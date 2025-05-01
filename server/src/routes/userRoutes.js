@@ -19,8 +19,9 @@ router.post(
   body('password').isLength({min: 3, max: 32}),
   UserController.login
 );
-router.post(
+router.put(
   '/update',
+  upload.single('avatar'),
   UserController.update
 )
 
