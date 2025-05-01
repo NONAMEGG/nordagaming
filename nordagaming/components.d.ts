@@ -8,12 +8,11 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./src/components/AppFooter.vue')['default']
+    AppHeader: typeof import('./src/components/AppHeader.vue')['default']
     GameCanvas: typeof import('./src/components/Runner/GameCanvas.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
-    RouterLink: typeof import('vue-router')['RouterLink']
-    AppHeader: typeof import('./src/components/AppHeader.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     LoginComponent: typeof import('./src/components/loginComponent.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TestGame: typeof import('./src/components/testGame.vue')['default']
     UserProfile: typeof import('./src/components/UserProfile.vue')['default']
