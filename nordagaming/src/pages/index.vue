@@ -1,5 +1,6 @@
 <template>
   <v-container class="fill-height">
+    
     <v-responsive class="fill-height mx-auto" max-width="900">
       <v-card class="pa-8">
         <v-list-item>
@@ -149,6 +150,9 @@
 
 <script>
 import {fetchRecords} from "../http/recordsAPI.js"
+import { useUserStore } from '@/stores/userStore.js';
+
+const userStore = useUserStore();
 
 export default {
   data() {

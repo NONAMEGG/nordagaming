@@ -1,4 +1,15 @@
 <template>
+    <v-alert
+  v-if="userStore.showAuthAlert"
+  type="warning"
+  closable
+  position="absolute"
+  class="alert-auth"
+  @click:close="userStore.showAuthAlert = false"
+>
+  You must sign in or sign up to continue.
+</v-alert>
+
   <v-app-bar app style="position: sticky;">
     <v-container class="d-flex align-center pa-0 px-5" fluid style="position: relative;">
       <div class="header-side">
@@ -12,9 +23,25 @@
           :slider-color="isMainTab ? undefined : 'transparent'"
         >
           <v-tab to="/" value="/">Home</v-tab>
-          <v-tab to="/runner" value="/runner">Runner</v-tab>
-          <v-tab to="/staking" value="/staking">Staking</v-tab>
-          <v-tab to="/wheel" value="/wheel">Wheel</v-tab>
+            <v-tab
+            to="/runner"
+            :value="isAuthenticated ? '/runner' : '/'"
+            @click="handleTabClick"
+            >
+            Runner
+            </v-tab>
+          <v-tab 
+          to="/staking" 
+          @click="handleTabClick" 
+          :value="isAuthenticated ? '/staking' : '/'">
+          Staking
+        </v-tab>
+          <v-tab
+           to="/wheel"
+            @click="handleTabClick"
+             :value="isAuthenticated ? '/staking' : '/'">
+             Wheel
+            </v-tab>
         </v-tabs>
       </div>
 
@@ -73,21 +100,23 @@
           v-for="(user, index) in topUsers"
           :key="user.id"
           :prepend-avatar="user.avatar"
+          class="mb-2"
         >
           <template v-slot:prepend>
             <v-badge
               :content="index + 1"
               color="amber"
-              overlap
             >
-             <v-avatar size="40" class="mr-2">
+             <v-avatar size="40">
                       <v-img :src="user.users.avatar_url" v-if="user.users.avatar_url"/>
-                      <v-icon v-else icon="mdi-account-circle"></v-icon>
+                      <v-icon v-else icon="mdi-account-circle" size="40"></v-icon>
               </v-avatar>
             </v-badge>
           </template>
+          <div class="ml-2">
           <v-list-item-title>{{ user.users.name }}</v-list-item-title>
           <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
+        </div>
         </v-list-item>
       </v-list>
       <!-- Кнопка "Загрузить еще" -->
@@ -110,13 +139,13 @@
 <script setup>
 import { useTheme } from 'vuetify'
 import { useThemeStore } from '@/stores/themeStore'
-const theme = useTheme()
-const themeStore = useThemeStore()
+const theme = useTheme();
+const themeStore = useThemeStore();
 
 function toggleTheme() {
-  const newTheme = theme.global.name.value === 'darkTheme' ? 'lightTheme' : 'darkTheme'
-  theme.global.name.value = newTheme
-  themeStore.setTheme(newTheme)
+  const newTheme = theme.global.name.value === 'darkTheme' ? 'lightTheme' : 'darkTheme';
+  theme.global.name.value = newTheme;
+  themeStore.setTheme(newTheme);
 }
 </script>
 
@@ -127,7 +156,7 @@ import { mapState } from "pinia";
 import {fetchRecords} from "../http/recordsAPI.js"
 
 const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
-
+const userStore = useUserStore();
 
 // const useTheme = () => {
 //   const theme = ref('light');
@@ -147,6 +176,7 @@ export default {
       limit: 10,
       loading: false,
       hasMore: true,
+      mainTabValue: MAIN_TABS.includes(this?.$route?.path) ? this.$route.path : null,
     };
   },
   computed: {
@@ -160,9 +190,6 @@ export default {
     isProfilePage() {
       return this.route.path === '/profile';
     },
-    mainTabValue() {
-      return this.isMainTab ? this.route.path : null;
-    },
     isSignUpPage() {
       return this.route.path === '/sign_up';
     },
@@ -174,11 +201,28 @@ export default {
           this.loadUsers();
         }
       } else {
-       this.resetTopUsers();
+        this.resetTopUsers();
       }
     },
+    // Sync route changes to mainTabValue
+    '$route.path'(newPath) {
+      if (MAIN_TABS.includes(newPath)) {
+        this.mainTabValue = newPath;
+      } else {
+        this.mainTabValue = null;
+      }
+    },
+    // Sync mainTabValue changes to route
+    mainTabValue(newVal) {
+      if (newVal && this.$route.path !== newVal) {
+        this.$router.push(newVal);
+      }
+    }
   },
   methods: {
+    handleTabClick() {
+        useUserStore().showAuthAlert = !this.isAuthenticated;
+    },
     openLogin() {
       this.$emit("show-login-dialog");
     },
@@ -247,5 +291,13 @@ export default {
 }
 .v-navigation-drawer__content {
   overflow-y: auto;
+}
+
+.alert-auth {
+  position: sticky;
+  top: 40px;
+  width: 100%;
+  z-index: 100;
+  margin-top: 16px;
 }
 </style>

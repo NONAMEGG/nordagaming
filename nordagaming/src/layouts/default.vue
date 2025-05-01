@@ -8,9 +8,11 @@
 
 
 <script setup>
-import { useTheme } from 'vuetify'
+import { useTheme } from 'vuetify';
+import { useUserStore } from '@/stores/userStore';
 const theme = useTheme();
-
+const userStore = useUserStore();
+console.log(userStore.showAuthAlert);
 </script>
 
 <script>

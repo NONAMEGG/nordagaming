@@ -12,6 +12,7 @@ export const useUserStore = defineStore("user", {
       currentPoints: 1024,
       password: "",
     },
+    showAuthAlert: false,
   }),
   getters: {
     getCurrentPoints: (state) =>
