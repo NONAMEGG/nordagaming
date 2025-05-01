@@ -1,8 +1,8 @@
 <template>
     <div ref="gameContainer" style="width: 800px; height: 600px;"></div>
-  </template>
+</template>
   
-  <script setup>
+<script setup>
   import { ref, onMounted, onUnmounted } from 'vue';
   import Phaser from 'phaser';
   import skyImage from '@/assets/skies/images.jpg';
@@ -34,4 +34,4 @@
   onUnmounted(() => {
     game?.destroy(true);
   });
-  </script>
+</script>
