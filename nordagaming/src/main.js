@@ -12,8 +12,6 @@ import App from "./App.vue";
 
 // Composables
 import { createApp } from "vue";
-// Vue.config.productionTip = false;
-// Vue.config.ignoredElements = [/ion-\w*/];
 
 const app = createApp(App);
 // defineIonPhaser(window);

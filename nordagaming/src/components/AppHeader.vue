@@ -46,6 +46,9 @@
           >
             <v-icon icon="mdi-account"></v-icon>
           </v-btn>
+          <v-btn icon class="ml-2" @click="toggleTheme">
+            <v-icon :icon="theme.global.current.value.dark ? 'mdi-weather-night' : 'mdi-sunglasses'"></v-icon>
+          </v-btn>
         </div>
       </div>
     </v-container>
@@ -103,13 +106,36 @@
   </v-navigation-drawer>
 </template>
 
-  <script>
+<script setup>
+import { useTheme } from 'vuetify'
+import { useThemeStore } from '@/stores/themeStore'
+const theme = useTheme()
+const themeStore = useThemeStore()
+
+function toggleTheme() {
+  const newTheme = theme.global.name.value === 'darkTheme' ? 'lightTheme' : 'darkTheme'
+  theme.global.name.value = newTheme
+  themeStore.setTheme(newTheme)
+}
+</script>
+
+<script>
+
 import { useUserStore } from "@/stores/userStore";
 import { mapState } from "pinia";
 import {fetchRecords} from "../http/recordsAPI.js"
 
 const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
 
+
+// const useTheme = () => {
+//   const theme = ref('light');
+//   const toggleTheme = () => {
+//     theme.value = theme.value === 'light' ? 'dark' : 'light';
+//     document.body.setAttribute('data-theme', theme.value);
+//   };
+//   return { theme, toggleTheme };
+// };
 export default {
   emits: ['show-login-dialog', 'show-signup-page'],
   data() {
