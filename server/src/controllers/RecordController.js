@@ -26,21 +26,10 @@ class RecordController{
     }
   }
   
-  async getTopRecords(req, res){
-    try{
-      const users = await RecordService.getTopRecords();
-      res.json({records: users})
-    } catch(error){
-      console.log('Ошибка при получении счёта пользователей')
-      res.json({message: error.message})
-    }
-
-  }
-
   async addRecord(req, res){
     try{
-      const {user_id} = req.params;
-      const {total_score} = req.body;
+      const total_score = req.body.total_score;
+      const user_id = req.params.user_id;
       const new_score = await RecordService.addRecord(user_id, total_score);
       console.log('Счет пользователя был обновлен');
       res.json({new_score: new_score}); 

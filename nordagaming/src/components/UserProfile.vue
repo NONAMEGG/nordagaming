@@ -37,6 +37,7 @@
               <h2>{{ userStore.user.name }}</h2>
               <p>{{ userStore.user.email }}</p>
               <p>Wallet: <v-kbd>{{ userStore.user.wallet }}</v-kbd></p>
+              <p>UserScore: <v-kbd>{{ userStore.user.currentPoints}}</v-kbd></p>
             </div>
           </v-list-item>
           <v-list-item v-else>

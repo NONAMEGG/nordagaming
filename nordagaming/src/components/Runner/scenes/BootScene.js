@@ -35,7 +35,7 @@ export default class BootScene extends Phaser.Scene {
 
             // Полная очистка localStorage
             localStorage.removeItem('coinSkins');
-            
+
             // Загрузка новых данных
             const images = await ImageService.fetchCoinImages();
             const uniqueImages = images.filter((img, index, self) =>
@@ -60,7 +60,7 @@ export default class BootScene extends Phaser.Scene {
             console.error('Failed to load coin skins:', error);
         }
     }
-  
+
     async preload() {
 
         this.load.audio('gameMusic', [gameMusic]);
@@ -103,34 +103,34 @@ export default class BootScene extends Phaser.Scene {
         const progressBox = this.add.graphics();
         progressBox.fillStyle(0x222222, 0.8);
         progressBox.fillRect(width / 2 - 160, height / 2 - 30, 320, 50);
-    
+
         this.load.on('progress', (value) => {
             progressBar.clear();
             progressBar.fillStyle(0xffffff, 1);
             progressBar.fillRect(width / 2 - 150, height / 2 - 20, 300 * value, 30);
         });
-    
+
         this.load.on('complete', () => {
             progressBar.destroy();
             progressBox.destroy();
         });
     }
-  
+
     create() {
         // Уничтожаем предыдущий SoundManager
         if (this.soundManager) {
             this.soundManager.destroy();
         }
-        
+
         // Инициализируем новый SoundManager
         this.soundManager = new SoundManager(this);
         this.soundManager.initMusic();
-            
+
         const startButton = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY + 100,
             'Click to start',
-            { 
+            {
                 fontSize: '32px',
                 fill: '#ffffff',
                 fontFamily: 'Arial',
@@ -138,14 +138,14 @@ export default class BootScene extends Phaser.Scene {
                 padding: { x: 20, y: 10 }
             }
         ).setOrigin(0.5);
-    
+
         startButton.setInteractive();
         startButton.on('pointerdown', () => {
             this.soundManager.playMusic();
             this.scene.stop('BootScene');
             this.scene.start('MainScene');
         });
-    
+
         const panel = this.add.graphics()
             .fillStyle(0x333333, 0.8)
             .fillRect(50, 50, 800, 300);
@@ -160,52 +160,52 @@ export default class BootScene extends Phaser.Scene {
         this.createPhaserSlider('Jump Volume', 180, 'jump');
         this.createPhaserSlider('Coin Volume', 240, 'coin');
 
-        this.createToggleButton(); 
+        this.createToggleButton();
 
     }
 
     createPhaserSlider(label, y, type) {
         const x = 100;
         const sliderWidth = 300;
-        
+
         this.add.text(x, y, label, {
             fontSize: '24px',
             fill: '#fff',
             fontFamily: 'Arial'
         });
-    
+
         const track = this.add.rectangle(x + 200, y + 20, sliderWidth, 10, 0x666666)
             .setOrigin(0, 0.5);
-    
+
         const thumb = this.add.circle(track.x + (this.soundManager.volumeSettings[type] * sliderWidth), y + 20, 15, 0xffffff)
             .setInteractive()
             .setDataEnabled();
-    
+
         const valueText = this.add.text(track.x + sliderWidth + 20, y, `${Math.round(this.soundManager.volumeSettings[type] * 100)}%`, {
             fontSize: '24px',
             fill: '#fff',
             fontFamily: 'Arial'
         });
-    
+
         thumb.data.set('type', type);
         thumb.data.set('track', track);
         thumb.data.set('text', valueText);
-    
+
         this.input.setDraggable(thumb);
-        
+
         this.input.on('drag', (pointer, thumb, dragX) => {
             const track = thumb.data.get('track');
             const minX = track.x;
             const maxX = track.x + track.width;
             const newX = Phaser.Math.Clamp(dragX, minX, maxX);
-            
+
             thumb.x = newX;
             const value = (newX - minX) / track.width;
             thumb.data.get('text').setText(`${Math.round(value * 100)}%`);
             this.soundManager.updateVolume(thumb.data.get('type'), value);
         });
     }
-    
+
     createToggleButton() {
         const button = this.add.text(100, 300, `Sound: ${this.soundManager.soundEnabled ? 'ON' : 'OFF'}`, {
             fontSize: '28px',
