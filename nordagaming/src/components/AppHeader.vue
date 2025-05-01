@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar app style="position: relative;">
+  <v-app-bar app style="position: sticky;">
     <v-container class="d-flex align-center pa-0 px-5" fluid style="position: relative;">
       <div class="header-side">
         TheWall.gaming

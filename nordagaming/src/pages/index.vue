@@ -91,52 +91,32 @@
           <div>
             <h2 class="text-h4 font-weight-bold mb-2">Top Players</h2>
             <div class="text-body-1 mb-2">See who's leading the Nordagaming community this week!</div>
-
-            <v-list>
-        <v-list-item
-          v-for="(user, index) in topUsers"
-          :key="user.id"
-          :prepend-avatar="user.avatar"
-        >
-          <template v-slot:prepend>
-            <v-badge
-              :content="index + 1"
-              color="amber"
-              overlap
-            >
-              <v-avatar size="40">
-                <v-img :src="user.avatar"></v-img>
-              </v-avatar>
-            </v-badge>
-          </template>
-          <v-list-item-title>{{ user.name }}</v-list-item-title>
-          <v-list-item-subtitle>{{ user.total_score }} points</v-list-item-subtitle>
-        </v-list-item>
-      </v-list>
-
-
             <v-table density="compact" class="mb-2">
               <thead>
                 <tr>
                   <th class="text-left">Rank</th>
-                  <th class="text-left">Player</th>
-                  <th class="text-left">Score</th>
-                  <th class="text-left">Rewards</th>
+                  <th class="text-center">Player</th>
+                  <th class="text-right">Score</th>
+                  <th class="text-right">Rewards</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(user, idx) in topUsers" :key="user.name">
+                <tr v-for="(user, idx) in topUsers" :key="user.id">
                   <td>{{ idx + 1 }}</td>
-                  <td>
+                  <td class="text-center">
                     <v-avatar size="24" class="mr-2">
-                      <v-img :src="user.avatar" v-if="user.avatar"/>
+                      <v-img :src="user.users.avatar_url" v-if="user.users.avatar_url"/>
                       <v-icon v-else icon="mdi-account-circle"></v-icon>
                     </v-avatar>
-                    {{ user.name }}
+                    {{ user.users.name }}
                   </td>
-                  <td>{{ user.score }}</td>
-                  <td>
-                    <v-chip color="success" size="small" v-if="user.rewards > 0">
+                  <td class="text-right">
+                    <v-chip :color="colors[idx % colors.length]" size="small" class="text-white">
+                      {{ user.total_score }}
+                    </v-chip>
+                  </td>
+                  <td class="text-right">
+                    <v-chip color="success" size="small" v-if="user.rewards > 0" >
                       {{ user.rewards }} ETH
                     </v-chip>
                     <span v-else>-</span>
@@ -168,8 +148,6 @@
 </template>
 
 <script>
-import { useUserStore } from "@/stores/userStore";
-import { mapState } from "pinia";
 import {fetchRecords} from "../http/recordsAPI.js"
 
 export default {
@@ -177,16 +155,16 @@ export default {
     return {
       topUsers: [],
       page: 1,
-      limit: 1,
+      limit: 10,
       loading: false,
-      hasMore: false,
+      hasMore: true,
       colors: [
-  'indigo',
-  'warning',
-  'pink darken-2',
-  'red lighten-1',
-  'deep-purple accent-4',
-],
+        'warning',
+        'red lighten-1',
+        'pink darken-2',
+        'indigo',
+        'deep-purple accent-4',
+      ],
       slides: [
         {
           title: 'Mini-Games',
@@ -211,23 +189,13 @@ export default {
       ],
     };
   },
-  watch: {
-    showTopUsers(val) {
-      if (val) {
-        if (this.topUsers.length === 0) {
-          this.loadUsers();
-        }
-      } else {
-       this.resetTopUsers();
-      }
-    },
-  },
   methods: {
     async loadUsers() {
       if (!this.hasMore) return;
       if (this.loading || !this.hasMore) return;
       this.loading = true;
       try {
+        console.log("Загрузка пользователей...");
         const res = await fetchRecords(this.limit, this.page);
         const newUsers = res.data.records || [];
         console.log(res);
@@ -235,6 +203,7 @@ export default {
           this.hasMore = false;
         }
         this.topUsers.push(...newUsers);
+        console.log(this.topUsers);
         this.page++;
       } catch (error) {
         console.error("Ошибка при загрузке пользователей:", error);
@@ -242,6 +211,9 @@ export default {
         this.loading = false;
       }
     },
+  },
+  mounted() {
+    this.loadUsers();
   },
 };
 </script>
