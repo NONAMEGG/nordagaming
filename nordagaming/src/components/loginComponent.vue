@@ -80,13 +80,14 @@ export default {
         async loginUser(){
           try{
             const response = await login(this.identifier, this.password);
-            console.log(response.data.id);
+            console.log(response);
             this.closeDialog();
             await userStore.updateProfile({
               id: response.data.id,
               name: response.data.name,
               email: response.data.email,
-              avatar: response.data.avatar_url
+              avatar: response.data.avatar_url,
+              total_score: response.data.total_score
             });
             router.push('/');
           }catch(error){

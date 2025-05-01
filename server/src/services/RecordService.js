@@ -40,44 +40,28 @@ class RecordService{
   }
 
   async addRecord(user_id, new_score){
-    const old_record = await this.getRecord(user_id);
-    const new_record = parseInt(old_record[0].total_score) + parseInt(new_score);
-    
-    const { error: updateError } = await supabase
+    let old_record = await this.getRecord(user_id);
+    old_record = old_record[0].total_score;
+    console.log(old_record);
+    if(parseInt(new_score) > old_record){
+      const new_record = parseInt(new_score);
+      const { error: updateError } = await supabase
       .from('records')
       .update({ total_score: new_record, updated_at: new Date() })
       .eq('user_id', user_id);
-    
-    if (updateError){
-      console.log(updateError.message)
-      throw new Error('Ошибка при обновлении счёта');
-    } 
-    
-    await TransactionService.createTransaction(user_id, 'score', new_score);
-
-    return {new_record}
-  }
-
-  async getTopRecords(){
-    const { data, error } = await supabase
-      .from('records')
-      .select(`
-        id,
-        total_score,
-        users (
-          name
-        )
-      `)
-      .order('total_score', { ascending: false })
-      .limit(10)
-
-    if (error) {
-      console.log(error);
-      throw Error('Ошибка при получении пользователей');
-    }
-    return data; 
-  }
  
+      if (updateError){
+        console.log(updateError.message)
+        throw new Error('Ошибка при обновлении счёта');
+      } 
+    
+      await TransactionService.createTransaction(user_id, 'score', new_score);
+
+      return new_record;
+    }else{
+      return old_record;
+    } 
+  }
 }
 
 export default new RecordService()
