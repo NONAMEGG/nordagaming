@@ -15,12 +15,14 @@ export default class MainScene extends Phaser.Scene {
         this.score = 0; 
         this.currentSkinIndex = 0;
         this.coinsCollected = 0;
-        this.gameSpeed = 5;
+        this.gameSpeed = 1;
         this.gameMaxSpeed = 8;
-        this.acceleration = 0.0001;
+        this.acceleration = 0.0005;
         this.enemies = this.add.group();
         this.nextCoinThreshold = 15; //5
         this.nextCoinThrough = 20;  //10
+        this.baseWaveSpacing = 55;
+        this.registry.set('coins', 0);
     }
 
     create() {
@@ -30,7 +32,7 @@ export default class MainScene extends Phaser.Scene {
         this.soundManager = this.scene.get('BootScene').soundManager;
 
         this.physics.world.createDebugGraphic();
-        this.physics.world.drawDebug = true;
+        this.physics.world.drawDebug = false;
 
         this.createBackground();
 
@@ -123,6 +125,7 @@ export default class MainScene extends Phaser.Scene {
     handlePlayerCoinCollision(player, coin) {
         coin.destroy();
         this.coinsCollected++;
+        this.registry.set('coins', this.coinsCollected);
         this.soundManager.playSound('PickUpCoinMusic'); 
     
         const textureKey = coin.texture.key;
@@ -232,8 +235,7 @@ export default class MainScene extends Phaser.Scene {
     spawnEnemy() {
         const rightmostEnemy = this.getRightmostEnemy();
         
-        const baseWaveSpacing = 65;
-        const waveSpacing = baseWaveSpacing * this.gameSpeed;
+        const waveSpacing = this.baseWaveSpacing * this.gameSpeed;
         
         if (rightmostEnemy) {
             const rightmostEdge = rightmostEnemy.x + rightmostEnemy.width;
@@ -252,8 +254,8 @@ export default class MainScene extends Phaser.Scene {
         else if (random <= 80) enemyCount = 2;
         else enemyCount = 3;
     
-        const groundY = this.cameras.main.height - 200;
-        let currentX = this.cameras.main.width + 150;
+        const groundY = this.cameras.main.height - 100;
+        let currentX = this.cameras.main.width + 200;
     
         for (let i = 0; i < enemyCount; i++) {
             if (i > 0) {

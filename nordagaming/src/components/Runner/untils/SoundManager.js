@@ -4,10 +4,36 @@ export default class SoundManager {
         this.music = null;
         this.sounds = [];
         this.soundEnabled = true;
-        this._musicConfig = {
-            loop: true,
-            volume: 0.5
+        // this._musicConfig = {
+        //     loop: true,
+        //     volume: 0.5
+        // };
+        this.volumeSettings = {
+            music: 0.5,
+            jump: 1.0,
+            coin: 1.0
         };
+
+        this.loadSettings();
+    }
+
+    loadSettings() {
+        const savedSettings = localStorage.getItem('soundSettings');
+        if (savedSettings) {
+            this.volumeSettings = JSON.parse(savedSettings);
+        }
+    }
+
+    saveSettings() {
+        localStorage.setItem('soundSettings', JSON.stringify(this.volumeSettings));
+    }
+
+    updateVolume(type, value) {
+        this.volumeSettings[type] = value;
+        if (type === 'music' && this.music) {
+            this.music.setVolume(value);
+        }
+        this.saveSettings();
     }
 
     initMusic() {
@@ -20,9 +46,9 @@ export default class SoundManager {
     playMusic() {
         if (!this.soundEnabled) return;
         
-        this.initMusic(); // Инициализируем перед воспроизведением
-        
+        this.initMusic();
         if (!this.music.isPlaying) {
+            this.music.setVolume(this.volumeSettings.music);
             this.music.play();
         }
     }
@@ -45,10 +71,15 @@ export default class SoundManager {
     playSound(key, config = {}) {
         if (!this.soundEnabled) return;
         
+        let volume = 1;
+        if (key === 'jumpMusic') volume = this.volumeSettings.jump;
+        if (key === 'PickUpCoinMusic') volume = this.volumeSettings.coin;
+
         const sound = this.scene.sound.add(key, {
-            volume: 1,
+            volume: volume,
             ...config
         });
+        
         this.sounds.push(sound);
         sound.play();
         return sound;

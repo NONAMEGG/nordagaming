@@ -14,7 +14,6 @@ import floor2 from '@/components/Runner/assets/images/Floor/floor2.png'
 import floor3 from '@/components/Runner/assets/images/Floor/floor3.png'
 import floor4 from '@/components/Runner/assets/images/Floor/floor4.png'
 import floor5 from '@/components/Runner/assets/images/Floor/floor5.png'
-import coinImage from '@/components/Runner/assets/images/Coin/coin.png';
 
 import gameMusic from '@/components/Runner/assets/sounds/plaing_song.mp3';
 import PickUpCoinMusic from '@/components/Runner/assets/sounds/coin.mp3';
@@ -127,24 +126,97 @@ export default class BootScene extends Phaser.Scene {
         this.soundManager = new SoundManager(this);
         this.soundManager.initMusic();
             
-        const startGame = () => {
+        const startButton = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY + 100,
+            'Click to start',
+            { 
+                fontSize: '32px',
+                fill: '#ffffff',
+                fontFamily: 'Arial',
+                backgroundColor: '#444',
+                padding: { x: 20, y: 10 }
+            }
+        ).setOrigin(0.5);
+    
+        startButton.setInteractive();
+        startButton.on('pointerdown', () => {
             this.soundManager.playMusic();
             this.scene.stop('BootScene');
             this.scene.start('MainScene');
-        };
+        });
+    
+        const panel = this.add.graphics()
+            .fillStyle(0x333333, 0.8)
+            .fillRect(50, 50, 800, 300);
 
-        this.input.on('pointerdown', startGame);
-        
-        //Текст-инструкция
-        this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY - 50,
-            'Click to start',
-            { 
+        this.add.text(70, 70, 'Sound Settings', {
             fontSize: '32px',
-            fill: '#ffffff',
+            fill: '#fff',
             fontFamily: 'Arial'
-            }
-        ).setOrigin(0.5);
+        });
+
+        this.createPhaserSlider('Music Volume', 120, 'music');
+        this.createPhaserSlider('Jump Volume', 180, 'jump');
+        this.createPhaserSlider('Coin Volume', 240, 'coin');
+
+        this.createToggleButton(); 
+
+    }
+
+    createPhaserSlider(label, y, type) {
+        const x = 100;
+        const sliderWidth = 300;
+        
+        this.add.text(x, y, label, {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        });
+    
+        const track = this.add.rectangle(x + 200, y + 20, sliderWidth, 10, 0x666666)
+            .setOrigin(0, 0.5);
+    
+        const thumb = this.add.circle(track.x + (this.soundManager.volumeSettings[type] * sliderWidth), y + 20, 15, 0xffffff)
+            .setInteractive()
+            .setDataEnabled();
+    
+        const valueText = this.add.text(track.x + sliderWidth + 20, y, `${Math.round(this.soundManager.volumeSettings[type] * 100)}%`, {
+            fontSize: '24px',
+            fill: '#fff',
+            fontFamily: 'Arial'
+        });
+    
+        thumb.data.set('type', type);
+        thumb.data.set('track', track);
+        thumb.data.set('text', valueText);
+    
+        this.input.setDraggable(thumb);
+        
+        this.input.on('drag', (pointer, thumb, dragX) => {
+            const track = thumb.data.get('track');
+            const minX = track.x;
+            const maxX = track.x + track.width;
+            const newX = Phaser.Math.Clamp(dragX, minX, maxX);
+            
+            thumb.x = newX;
+            const value = (newX - minX) / track.width;
+            thumb.data.get('text').setText(`${Math.round(value * 100)}%`);
+            this.soundManager.updateVolume(thumb.data.get('type'), value);
+        });
+    }
+    
+    createToggleButton() {
+        const button = this.add.text(100, 300, `Sound: ${this.soundManager.soundEnabled ? 'ON' : 'OFF'}`, {
+            fontSize: '28px',
+            fill: '#fff',
+            backgroundColor: '#444',
+            padding: { x: 20, y: 10 }
+        })
+        .setInteractive()
+        .on('pointerdown', () => {
+            const newState = this.soundManager.toggleSound();
+            button.setText(`Sound: ${newState ? 'ON' : 'OFF'}`);
+        });
     }
 }
