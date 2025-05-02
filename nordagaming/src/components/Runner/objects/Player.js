@@ -6,10 +6,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.soundManager = soundManager;
 
-        // Установка якоря в центр спрайта
         this.setOrigin(0.5, 1);
         
-        // Физическое тело
         this.setScale(2);
         this.body.setSize(20, 30);
         this.body.setOffset(3, -10);
@@ -17,11 +15,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.play('run');
         
-        // Физические параметры
         this.body.setBounce(0.1);
         this.body.setDragX(200);
         
-        // Управление
         this.cursors = scene.input.keyboard.createCursorKeys();
 
         this.jumpCount = 0;
@@ -56,5 +52,22 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         this.isJumping = true;
         this.jumpCount++;
+    }
+
+    destroyPlayer() {
+        if (this.body) {
+            this.scene.physics.world.disable(this);
+        }
+        
+        if (this.scene) {
+            this.scene.children.remove(this);
+        }
+        
+        if (this.cursors) {
+            this.cursors.space.off('down');
+            this.cursors.up.off('down');
+        }
+        
+        super.destroy();
     }
 }

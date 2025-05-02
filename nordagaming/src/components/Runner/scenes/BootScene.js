@@ -117,12 +117,10 @@ export default class BootScene extends Phaser.Scene {
     }
 
     create() {
-        // Уничтожаем предыдущий SoundManager
         if (this.soundManager) {
             this.soundManager.destroy();
         }
 
-        // Инициализируем новый SoundManager
         this.soundManager = new SoundManager(this);
         this.soundManager.initMusic();
 
@@ -142,7 +140,6 @@ export default class BootScene extends Phaser.Scene {
         startButton.setInteractive();
         startButton.on('pointerdown', () => {
             this.soundManager.playMusic();
-            this.scene.stop('BootScene');
             this.scene.start('MainScene');
         });
 
@@ -162,6 +159,17 @@ export default class BootScene extends Phaser.Scene {
 
         this.createToggleButton();
 
+    }
+
+    shutdown() {
+        if (this.soundManager) {
+            this.soundManager.destroy();
+            this.soundManager = null;
+        }
+        
+        this.children.each(child => {
+            if (child.destroy) child.destroy();
+        });
     }
 
     createPhaserSlider(label, y, type) {

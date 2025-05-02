@@ -22,8 +22,8 @@ export default class MainScene extends Phaser.Scene {
         this.gameMaxSpeed = 8;
         this.acceleration = 0.0005;
         this.enemies = this.add.group();
-        this.nextCoinThreshold = 15; //5
-        this.nextCoinThrough = 20;  //10
+        this.nextCoinThreshold = 1; //15
+        this.nextCoinThrough = 1;  //20
         this.baseWaveSpacing = 55;
         this.registry.set('coins', 0);
     }
@@ -54,15 +54,13 @@ export default class MainScene extends Phaser.Scene {
             repeat: -1
         });
 
-        //Игрок
         this.player = new Player(this, 100, this.cameras.main.height - 150, this.soundManager).setDepth(10);
 
-        //Группа врагов
         this.enemies = this.physics.add.group().setDepth(5);
 
-        this.spawnEnemy(); // Первый спавн сразу
+        this.spawnEnemy();
         this.spawnTimer = this.time.addEvent({
-            delay: 2000,       // Начальная задержка
+            delay: 2000,       
             callback: this.spawnEnemy,
             callbackScope: this,
             loop: true
@@ -95,17 +93,44 @@ export default class MainScene extends Phaser.Scene {
 
         this.incrementScore();
 
-        // Увеличение скорости до максимальной
         if (this.gameSpeed < this.gameMaxSpeed) {
             this.gameSpeed += this.acceleration;
         }
 
-        // Ограничиваем скорость максимумом
         this.gameSpeed = Phaser.Math.Clamp(
             this.gameSpeed,
             4,
             this.gameMaxSpeed
         );
+    }
+
+    shutdown() {
+        this.enemies.clear(true, true);
+        this.textures.getTextureKeys()
+        .filter(key => key.startsWith('coin_'))
+        .forEach(key => this.textures.remove(key));
+        this.coinGroup.clear(true, true);
+        
+        if (this.groundManager) {
+            this.groundManager.clearTiles();
+            this.groundManager.destroy();
+            this.groundManager = null;
+        }
+        
+        if (this.player) {
+            this.player.destroyPlayer();
+            this.player = null;
+        }
+        
+        this.anims.remove('run');
+        
+        this.registry.events.off('changedata');
+        
+        this.time.removeAllEvents();
+        
+        this.enemies = null;
+        this.coinGroup = null;
+        this.vueContext = null;
     }
 
     setVueContext(context) {
@@ -126,7 +151,9 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handlePlayerCoinCollision(player, coin) {
-        coin.destroy();
+        if (coin.destroyCoin) { 
+            coin.destroyCoin();
+        }
         this.coinsCollected++;
         this.registry.set('coins', this.coinsCollected);
         this.soundManager.playSound('PickUpCoinMusic');
@@ -150,7 +177,7 @@ export default class MainScene extends Phaser.Scene {
     }
 
     spawnCoin() {
-        if (this.availableSkins.length === 0) return; // Защита от пустого списка
+        if (this.availableSkins.length === 0) return;
 
         const x = this.cameras.main.width + Phaser.Math.Between(200, 400);
         const y = this.cameras.main.height - 250;
@@ -179,7 +206,7 @@ export default class MainScene extends Phaser.Scene {
             this.physics.world.removeCollider(this.playerEnemyCollider);
         }
 
-        // Создаем коллайдер между игроком и врагами
+        // Коллайдер между игроком и врагами
         this.playerEnemyCollider = this.physics.add.overlap(
             this.player,
             this.enemies,
@@ -205,7 +232,6 @@ export default class MainScene extends Phaser.Scene {
     }
 
     createBackground() {
-        // Создаем 3 фона для плавного перехода
         this.backgrounds = [];
         const bgWidth = this.textures.get('background').getSourceImage().width;
 

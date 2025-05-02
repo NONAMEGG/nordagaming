@@ -8,7 +8,7 @@ export default class Coin extends Phaser.Physics.Arcade.Sprite {
         const targetSize = 80;
         this.setDisplaySize(targetSize, targetSize);
 
-        const hitboxSize = 400; //размер хитбокса
+        const hitboxSize = 400;
         this.body
             .setSize(hitboxSize, hitboxSize)
             .setOffset(
@@ -25,7 +25,23 @@ export default class Coin extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityX(-speed * 200);
         
         if (this.x < -this.displayWidth * 2) {
-            this.destroy();
+            this.destroyCoin();
         }
+    }
+
+    destroyCoin() {
+        if (this.body) {
+            this.scene.physics.world.disable(this);
+        }
+
+        if (this.group) {
+            this.group.remove(this, true, true);
+        }
+
+        if (this.scene) {
+            this.scene.children.remove(this);
+        }
+
+        super.destroy();
     }
 }

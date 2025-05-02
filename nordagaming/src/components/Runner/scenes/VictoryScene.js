@@ -48,15 +48,24 @@ export default class VictoryScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setInteractive()
         .on('pointerdown', () => {
+            this.scene.stop('UiScene');
+            this.scene.stop('MainScene');
+            this.scene.stop('GameOverScene');
+            this.scene.stop('VictoryScene');
+            
             const bootScene = this.scene.get('BootScene');
             if (bootScene.soundManager) {
                 bootScene.soundManager.destroy();
             }
-        
-            this.scene.stop('MainScene');
-            this.scene.stop('GameOverScene');
-            
+
+            this.scene.start('UiScene');
             this.scene.start('BootScene');
         });;
+    }
+
+    shutdown() {
+        this.children.each(child => {
+            if (child.destroy) child.destroy();
+        });
     }
 }

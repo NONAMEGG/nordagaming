@@ -22,13 +22,15 @@ export default class GameOverScene extends Phaser.Scene {
         console.log('Данные с сервера по рекорду', response)
       }
     }
-    async create() {
-        // Затемнение фона
-        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5)
-            .setOrigin(0, 0);
-
-        // Текст Game Over
-        this.add.text(
+    async create() {    
+        const bg = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7)
+            .setOrigin(0, 0)
+            .setDepth(0);
+    
+        this.uiElements = this.add.group();
+        this.uiElements.add(bg);
+    
+        const gameOverText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY - 50,
             'Game Over',
@@ -37,10 +39,10 @@ export default class GameOverScene extends Phaser.Scene {
                 fill: '#ff0000',
                 fontFamily: 'Arial'
             }
-        ).setOrigin(0.5);
-
-        // Отображение счета
-        this.add.text(
+        ).setOrigin(0.5).setDepth(1);
+        this.uiElements.add(gameOverText);
+    
+        const scoreText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
             `Score: ${this.score}`,
@@ -49,40 +51,54 @@ export default class GameOverScene extends Phaser.Scene {
                 fill: '#ffffff',
                 fontFamily: 'Arial'
             }
-        ).setOrigin(0.5);
-
+        ).setOrigin(0.5).setDepth(1);
+        this.uiElements.add(scoreText);
+    
         await this.saveProgress(this.score);
-                // Кнопка рестарта
-        const restartText = this.add.text(
+    
+        this.restartText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY + 100,
             'Click to menu',
             {
                 fontSize: '24px',
                 fill: '#ffffff',
-                fontFamily: 'Arial'
+                fontFamily: 'Arial',
+                backgroundColor: '#333',
+                padding: { x: 20, y: 10 }
             }
-        ).setOrigin(0.5);
-
-        const bootScene = this.scene.get('BootScene');
-        if (bootScene.soundManager) {
-            bootScene.soundManager.stopMusic();
-        }
-
-        restartText.setInteractive();
-        restartText.on('pointerdown', () => {
-            // Корректная остановка звуков через SoundManager
-            const bootScene = this.scene.get('BootScene');
-            if (bootScene.soundManager) {
-                bootScene.soundManager.destroy();
-            }
-
-            // Остановка всех активных сцен
-            this.scene.stop('MainScene');
-            this.scene.stop('GameOverScene'); // или VictoryScene
-
-            // Полный перезапуск игры через BootScene
+        )
+        .setOrigin(0.5)
+        .setDepth(2)
+        .setInteractive();
+    
+        this.uiElements.add(this.restartText);
+    
+        this.restartText.on('pointerdown', () => {
+            this.cleanupGame();
             this.scene.start('BootScene');
+            this.scene.start('UiScene');
         });
+    }
+    
+    cleanupGame() {
+        this.scene.stop('UiScene');
+        this.scene.stop('MainScene');
+        this.scene.stop('GameOverScene');
+        this.scene.stop('VictoryScene');
+    
+        const bootScene = this.scene.get('BootScene');
+        if (bootScene?.soundManager) {
+            bootScene.soundManager.destroy();
+        }
+    }
+    
+    shutdown() {
+        if (this.uiElements) {
+            this.uiElements.clear(true, true);
+        }
+        if (this.restartText) {
+            this.restartText.off('pointerdown');
+        }
     }
 }

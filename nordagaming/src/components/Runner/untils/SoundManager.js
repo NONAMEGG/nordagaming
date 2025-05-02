@@ -37,7 +37,6 @@ export default class SoundManager {
     }
 
     initMusic() {
-        // Создаем новый экземпляр музыки, если его нет или предыдущий был уничтожен
         if (!this.music || this.music.isDestroyed) {
             this.music = this.scene.sound.add('gameMusic', this._musicConfig);
         }
@@ -56,7 +55,6 @@ export default class SoundManager {
     stopMusic() {
         if (this.music) {
             this.music.stop();
-            // Не уничтожаем, чтобы можно было переиспользовать
         }
     }
 
@@ -100,12 +98,13 @@ export default class SoundManager {
         if (this.music) {
             this.music.stop();
             this.music.destroy();
+            this.music = null;
         }
         this.sounds.forEach(sound => {
             sound.stop();
             sound.destroy();
         });
-        this.sounds = []; // Очищаем массив
+        this.sounds.length = 0;
     }
 
     reset() {

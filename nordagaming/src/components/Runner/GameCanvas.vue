@@ -15,7 +15,15 @@
 
     
     export default {
+        data() {
+            return {
+                game: null,
+                isGameDestroyed: false
+            };
+        },
         mounted() {
+            if (this.game || this.isGameDestroyed) return;
+
             const config = {
                 type: Phaser.AUTO,
                 parent: this.$refs.gameContainer,
@@ -38,19 +46,25 @@
 
             this.game = new Phaser.Game(config);
             
-            // Связываем Phaser с Vue компонентом
             this.game.events.on('ready', () => {
                 const mainScene = this.game.scene.getScene('MainScene');
                 if (mainScene) {
-                    mainScene.setVueContext(this); // Передаем контекст в сцену
+                    mainScene.setVueContext(this);
                 }
             });
         },
-        beforeDestroy() {
-            if (this.game) this.game.destroy(true);
+        beforeUnmount() {
+            if (this.game) {
+                this.game.scene.getScenes(true).forEach(scene => {
+                    scene.events.off();
+                    if (scene.shutdown) scene.shutdown();
+                });
+                
+                this.game.destroy(true, false);
+                this.game = null;
+            }
         },
         methods: {
-            // Отправка обновленного счета
             handleScoreUpdate(newScore) {
                 this.$emit('update-score', newScore);
             },
@@ -88,7 +102,6 @@
         margin: 0 auto;
     }
 
-    /* Отключение масштабирования браузера */
     body {
         touch-action: none;
         zoom: reset;
