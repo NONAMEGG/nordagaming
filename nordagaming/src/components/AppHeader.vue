@@ -38,8 +38,8 @@
         </v-tab>
           <v-tab
            to="/wheel"
-            @click="handleTabClick"
-             :value="isAuthenticated ? '/staking' : '/'">
+             :value="isAuthenticated ? '/wheel' : '/'"
+             @click="handleTabClick">
              Wheel
             </v-tab>
         </v-tabs>
