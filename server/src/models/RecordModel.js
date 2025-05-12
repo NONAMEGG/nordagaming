@@ -6,6 +6,6 @@ export default async function createRecordTable(supabase) {
     console.error('Ошибка при создании таблицы с рекордами:', error);
     throw Error();
   } else {
-    console.log('Таблица успешно создана или уже существует: ', data);
+    console.log('Таблица с рекордами успешно создана или уже существует: ', data);
   }
 }

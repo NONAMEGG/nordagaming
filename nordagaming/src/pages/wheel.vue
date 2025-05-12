@@ -11,7 +11,7 @@
   <v-container class="fill-height">
 
     <v-responsive class="fill-height mx-auto text-center" max-width="900">
-                
+
 <Roulette
     ref="wheel"
     :key="rouletteKey"
@@ -42,6 +42,10 @@
 // import { gsap, Power1, Power4 } from "gsap";
 
 import { Roulette } from "vue3-roulette";
+import { validateSpin, bonusSave } from "../http/bonusAPI.js"
+import { useUserStore } from '@/stores/userStore';
+
+const userStore = useUserStore();
 
 export default {
   components: {
@@ -102,15 +106,16 @@ export default {
     };
   },
   methods: {
-    handleWheelClick() {
-      if (!this.canUseWheel()) {
+    async handleWheelClick() {
+      console.log('click')
+      const bl = await validateSpin(userStore.getUserId);
+      console.log(bl);
+      if(bl.data.data){
+        this.launchWheel();
+      }else{
         this.showTimerAlert = true;
         return;
-      } else if (this.isSpinning) {
-        return;
       }
-      this.isSpinning = true;
-      this.launchWheel();
     },
     launchWheel() {
       this.rouletteKey += 1;
@@ -119,9 +124,10 @@ export default {
     wheelStartedCallback() {
       console.log("wheelStartedCallback");
     },
-    wheelEndedCallback(evt) {
+    async wheelEndedCallback(evt) {
       this.canSpin = false;
       console.log(evt);
+      const response = await bonusSave(userStore.getUserId, evt.name)
     },
     canUseWheel() {
       return this.canSpin;

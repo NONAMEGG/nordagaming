@@ -6,6 +6,6 @@ export default async function createTransactionTable(supabase) {
     console.error('Ошибка при создании таблицы с транзакциями: ', error);
     throw Error();
   } else {
-    console.log('Таблица успешно создана или уже существует: ', data);
+    console.log('Таблица с транзакциями успешно создана или уже существует: ', data);
   }
 }

@@ -60,7 +60,15 @@ class AuthService{
       .insert({user_id: data[0].id})
 
     if(errorRecords){
-      throw new InternalServerError('Ошибка при добавлении записи в рекорды');
+      throw new InternalServerError('Ошибка при добавлении записи в рекорды при создании пользоваетля');
+    }
+
+    const {error: errorBonus} = await supabase
+      .from('bonus')
+      .insert({user_id: data[0].id})
+
+    if(errorBonus){
+      throw new InternalServerError('Ошибка при добавлении записи в бонусы при создании пользователя')
     }
 
     return {

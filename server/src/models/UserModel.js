@@ -6,6 +6,6 @@ export default async function createUserTable(supabase) {
     console.error('Ошибка при создании таблицы c пользователями: ', error);
     throw Error();
   } else {
-    console.log('Таблица успешно создана или уже существует: ', data);
+    console.log('Таблица с пользователями успешно создана или уже существует: ', data);
   }
 }
