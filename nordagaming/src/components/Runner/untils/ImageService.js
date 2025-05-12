@@ -1,6 +1,5 @@
 // services/ImageService.js
-import { GraphQLClient } from 'graphql-request';
-
+import { getCluster } from "@/graph/clustersAPI";
 
 export default {
     async fetchCoinImages() {
@@ -19,42 +18,23 @@ export default {
             { id: 11, url: 'https://avatars.mds.yandex.net/i?id=60cb4779afbefee37775fa1ef60e36be1940fd78-9181740-images-thumbs&n=13' },
         ];
 
-        // try {
-        //     const CLUSTER_ID = "111";
+        try {
+            const response = await getCluster();
             
-        //     const client = new GraphQLClient(
-        //       'https://graph.nordavind.ru/subgraphs/name/the-wall-polygon',
-        //       {
-        //         headers: {
-        //           'Content-Type': 'application/json',
-        //           'Accept': 'application/json',
-        //         }
-        //       }
-        //     );
-      
-        //     const query = `
-        //       query GetClusterImages($id: ID!) {
-        //         cluster(id: $id) {
-        //           areas {
-        //             imageCID
-        //           }
-        //         }
-        //       }
-        //     `;
-      
-        //     const data = await client.request(query, { id: CLUSTER_ID });
-            
-        //     return data.cluster.areas
-        //       .filter(area => area.imageCID?.length > 0)
-        //       .map((area, index) => ({
-        //         id: index + 1,
-        //         url: `https://thewall.global/api/download/${area.imageCID[0]}`
-        //       }));
-      
-        // } catch (error) {
-        //     console.error('GraphQL Error:', error.response?.errors || error.message);
-        //     return mockImages;
-        // }
-        return mockImages;
+            if (!response?.cluster?.areas) {
+                console.warn('Unexpected response structure:', response);
+                return mockImages;
+            }
+                        
+            return response.cluster.areas
+                .filter(area => area.imageCID?.length > 0)
+                .map((area, index) => ({
+                id: index + 1,
+                url: `${area.imageCID[0]}`
+                }));
+            } catch (error) {
+                console.error('Failed to fetch cluster data:', error);
+                return mockImages;
+            }
     }
 }

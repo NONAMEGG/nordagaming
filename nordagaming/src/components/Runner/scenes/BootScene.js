@@ -21,60 +21,66 @@ import jumpMusic from '@/components/Runner/assets/sounds/jump.mp3'
 
 import SoundManager from '../untils/SoundManager.js';
 import ImageService from '../untils/ImageService.js';
+import { getImage } from '@/graph/imagesAPI.js';
 
 export default class BootScene extends Phaser.Scene {
     constructor() {
         super({ key: 'BootScene' });
+        this.loadCompleted = false;
     }
 
     async loadCoinSkins() {
         try {
-            // Удаляем все текстуры монет из кэша Phaser
-            const textureKeys = this.textures.getTextureKeys().filter(key => key.startsWith('coin_'));
-            textureKeys.forEach(key => this.textures.remove(key));
+            // Очистка предыдущих текстур
+            // this.textures.getTextureKeys()
+            //     .filter(key => key.startsWith('coin_'))
+            //     .forEach(key => this.textures.remove(key));
+            
+            // localStorage.removeItem('coinSkins');
 
-            // Полная очистка localStorage
-            localStorage.removeItem('coinSkins');
-
-            // Загрузка новых данных
             const images = await ImageService.fetchCoinImages();
-            const uniqueImages = images.filter((img, index, self) =>
-                self.findIndex(i => i.id === img.id) === index
-            );
-
-            const skins = await Promise.all(uniqueImages.map(async img => {
-                const response = await fetch(img.url);
-                const blob = await response.blob();
-                return new Promise(resolve => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve({
-                        id: img.id,
-                        data: reader.result
+            
+            const skins = await Promise.all(images.map(async img => {
+                try {
+                    const response = await getImage(img.url);
+                    const blob = response.data;
+                    
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve({
+                            id: img.id,
+                            data: reader.result
+                        });
+                        reader.readAsDataURL(blob);
                     });
-                    reader.readAsDataURL(blob);
-                });
+                } catch (error) {
+                    console.error(`Failed to load image ${img.id}:`, error);
+                    return null;
+                }
             }));
 
-            localStorage.setItem('coinSkins', JSON.stringify(skins));
+            const validSkins = skins.filter(skin => skin !== null);
+            localStorage.setItem('coinSkins', JSON.stringify(validSkins));
+            
+            validSkins.forEach(skin => {
+                this.textures.addBase64(`coin_${skin.id}`, skin.data.split(',')[1]);
+            });
+            
         } catch (error) {
             console.error('Failed to load coin skins:', error);
         }
     }
 
     async preload() {
+        this.loadCompleted = false;
+        this.load.image('player_frame1', grib);
+        this.load.image('player_frame2', grib2);
+        this.load.image('player_frame3', grib3);
+        this.load.image('player_frame4', grib4);
 
         this.load.audio('gameMusic', [gameMusic]);
         this.load.audio('PickUpCoinMusic', [PickUpCoinMusic]);
         this.load.audio('jumpMusic', [jumpMusic]);
-
-        localStorage.removeItem('coinSkins');
-
-        await this.loadCoinSkins();
-
-        const savedSkins = JSON.parse(localStorage.getItem('coinSkins')) || [];
-        savedSkins.forEach(skin => {
-            this.textures.addBase64(`coin_${skin.id}`, skin.data);
-        });
 
         this.load.image('background', backgroundImage);
 
@@ -84,39 +90,70 @@ export default class BootScene extends Phaser.Scene {
         this.load.image('enemy4', enemy4);
         this.load.image('enemy5', enemy5);
 
-        this.load.image('player_frame1', grib);
-        this.load.image('player_frame2', grib2);
-        this.load.image('player_frame3', grib3);
-        this.load.image('player_frame4', grib4);
-
         this.load.image('floor_frame1', floor1);
         this.load.image('floor_frame2', floor2);
         this.load.image('floor_frame3', floor3);
         this.load.image('floor_frame4', floor4);
         this.load.image('floor_frame5', floor5);
 
-        //this.load.image('coin', coinImage);
+        this.createExtendedProgressBar();
 
-        // Прогресс-бар
+        //await this.loadCoinSkins();
+
+        // const savedSkins = JSON.parse(localStorage.getItem('coinSkins')) || [];
+        // savedSkins.forEach(skin => {
+        //     this.textures.addBase64(`coin_${skin.id}`, skin.data);
+        // });
+
+        await this.loadAllResources();
+    }
+
+    createExtendedProgressBar(){
         const { width, height } = this.cameras.main;
-        const progressBar = this.add.graphics();
-        const progressBox = this.add.graphics();
-        progressBox.fillStyle(0x222222, 0.8);
-        progressBox.fillRect(width / 2 - 160, height / 2 - 30, 320, 50);
+        this.fullProgress = {
+            box: this.add.graphics(),
+            bar: this.add.graphics(),
+            total: 2
+        };
 
-        this.load.on('progress', (value) => {
-            progressBar.clear();
-            progressBar.fillStyle(0xffffff, 1);
-            progressBar.fillRect(width / 2 - 150, height / 2 - 20, 300 * value, 30);
-        });
+        this.fullProgress.box.fillStyle(0x222222, 0.8)
+            .fillRect(width/2 - 160, height/2 - 30, 320, 50);
+    }
 
-        this.load.on('complete', () => {
-            progressBar.destroy();
-            progressBox.destroy();
+    async loadAllResources() {
+        await new Promise(resolve => {
+            this.load.once('complete', resolve);
+            this.load.start();
         });
+        this.updateProgress(1);
+
+        if (!localStorage.getItem('coinSkins')) await this.loadCoinSkins(); 
+        this.updateProgress(2);
+        
+        this.fullProgress.bar.destroy();
+        this.fullProgress.box.destroy();
+        this.loadCompleted = true;
+    }
+
+    updateProgress(completedSteps) {
+        const progress = completedSteps / this.fullProgress.total;
+        const { width, height } = this.cameras.main;
+        
+        this.fullProgress.bar.clear()
+            .fillStyle(0xffffff, 1)
+            .fillRect(
+                width/2 - 150, 
+                height/2 - 20, 
+                300 * progress, 
+                30
+            );
     }
 
     create() {
+        if (!this.loadCompleted) {
+            this.time.delayedCall(100, this.create.bind(this));
+            return;
+        }
         if (this.soundManager) {
             this.soundManager.destroy();
         }

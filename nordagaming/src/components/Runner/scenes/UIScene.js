@@ -46,7 +46,7 @@ export default class UiScene extends Phaser.Scene {
         }
 
         if (key === 'coins' && this.coinsText) {
-            this.coinsText.setText(`Coins: ${value}`);
+            this.coinsText.setText(`Coins: ${value} / ${Object.keys(JSON.parse(localStorage.getItem('coinSkins'))).length}`);
         }
     }
 }
