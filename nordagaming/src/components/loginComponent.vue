@@ -31,8 +31,10 @@
 <script>
 import {login} from '../http/userAPI.js'
 import { useUserStore } from '@/stores/userStore';
+import { useErrorStore } from '@/stores/errorStore';
 
 const userStore = useUserStore();
+const errorStore = useErrorStore();
 
 export default {
     props: {
@@ -74,7 +76,7 @@ export default {
             if (this.$refs.form.validate()) {
                 console.log('Identifier:', this.identifier);
                 console.log('Password:', this.password);
-                this.loginUser()
+                this.loginUser();
             }
         },
         async loginUser(){
@@ -89,9 +91,10 @@ export default {
               avatar: response.data.avatar_url,
               total_score: response.data.total_score
             });
-            router.push('/');
+            this.$router.push("/");
           }catch(error){
-            console.log('Произошла ошибка, ', error)
+            console.log('Ошибка при входе:', error);
+            errorStore.showError('Ошибка при входе: ' + (error?.response?.data?.message || 'Неизвестная ошибка'));
           }
         }
     },

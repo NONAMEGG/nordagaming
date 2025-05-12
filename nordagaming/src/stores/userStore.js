@@ -2,18 +2,24 @@ import { defineStore } from "pinia";
 import avatarImage from "@/assets/logo.png";
 
 export const useUserStore = defineStore("user", {
-  state: () => ({
-    user: {
-      id: "123",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      avatar: avatarImage,
-      wallet: "walletnum1231350dko3dkK@)3",
-      currentPoints: 1024,
-      password: "",
-    },
-    showAuthAlert: false,
-  }),
+  state: () => {
+    const saved = localStorage.getItem('userStore');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return {
+      user: {
+        id: "",
+        name: "",
+        email: "",
+        avatar: avatarImage,
+        wallet: "",
+        currentPoints: 0,
+        password: "",
+      },
+      isAuthenticated: false,
+    };
+  },
   getters: {
     getCurrentPoints: (state) =>
       state.user.currentPoints,
@@ -40,6 +46,7 @@ export const useUserStore = defineStore("user", {
         this.user.currentPoints = updatedData.total_score;
       }
       console.log("Profile updated:", this.user);
+      this.saveToStorage();
     },
     reset() {
       this.user = {
@@ -51,6 +58,11 @@ export const useUserStore = defineStore("user", {
         currentPoints: 0,
         password: "",
       };
+      this.isAuthenticated = false;
+      this.saveToStorage();
+    },
+    saveToStorage() {
+      localStorage.setItem('userStore', JSON.stringify(this.$state));
     }
   },
 });

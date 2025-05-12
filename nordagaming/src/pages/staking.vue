@@ -98,6 +98,9 @@ import { ethers } from 'ethers';
 import { getNFTBettingContract, getMockNFTContract } from "../contracts/Betting";
 import GetBets from "./stake_comp/GetBets.vue";
 import CountDown from "./stake_comp/Countdown.vue";
+import { useErrorStore } from '@/stores/errorStore';
+
+const errorStore = useErrorStore();
 
 const currentGameId = ref(0);
 const gameEnded = ref(false);
@@ -120,7 +123,7 @@ const initGameData = async () => {
     nftId.value = await contract.nftId();
     bettingEndTime.value = await contract.bettingEndTime();
   } catch (error) {
-    console.error('Ошибка инициализации:', error);
+    errorStore.showError('Ошибка инициализации: ' + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
@@ -139,8 +142,7 @@ const placeBet = async () => {
     customBetAmount.value = '';
     await initGameData();
   } catch (error) {
-    console.error(error);
-    alert(`Ошибка при ставке: ${error.message}`);
+    errorStore.showError('Ошибка при ставке: ' + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
@@ -168,8 +170,7 @@ const depositNFT = async () => {
     alert("NFT внесён успешно!");
     await initGameData();
   } catch (error) {
-    console.error(error);
-    alert(`Ошибка при депозите NFT: ${error.message}`);
+    errorStore.showError('Ошибка при депозите NFT: ' + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
@@ -181,8 +182,7 @@ const endGameEarly = async () => {
     alert("Игра завершена досрочно!");
     await initGameData();
   } catch (error) {
-    console.error(error);
-    alert(`Ошибка при завершении игры: ${error.message}`);
+    errorStore.showError('Ошибка при завершении игры: ' + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 

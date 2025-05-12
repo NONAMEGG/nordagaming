@@ -1,4 +1,5 @@
 <template>
+  <GlobalErrorAlert />
   <AppHeader @show-login-dialog="loginDialog = true" @show-signup-page="goToSignUp" />
   <loginComponent v-model="loginDialog" />
   <v-main :class="theme.global.current.value.dark ?  'blur-background' : 'blur-backgroundlight'">
@@ -10,9 +11,9 @@
 <script setup>
 import { useTheme } from 'vuetify';
 import { useUserStore } from '@/stores/userStore';
+import GlobalErrorAlert from '@/components/GlobalErrorAlert.vue';
 const theme = useTheme();
 const userStore = useUserStore();
-console.log(userStore.showAuthAlert);
 </script>
 
 <script>

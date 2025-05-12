@@ -1,5 +1,5 @@
 <template>
-    <v-alert
+    <!-- <v-alert
   v-if="userStore.showAuthAlert"
   type="warning"
   closable
@@ -8,7 +8,7 @@
   @click:close="userStore.showAuthAlert = false"
 >
   You must sign in or sign up to continue.
-</v-alert>
+</v-alert> -->
 
   <v-app-bar app style="position: sticky;">
     <v-container class="d-flex align-center pa-0 px-5" fluid style="position: relative;">
@@ -150,13 +150,13 @@ function toggleTheme() {
 </script>
 
 <script>
-
+import { useErrorStore } from '@/stores/errorStore';
 import { useUserStore } from "@/stores/userStore";
 import { mapState } from "pinia";
 import {fetchRecords} from "../http/recordsAPI.js"
 
 const MAIN_TABS = ['/', '/runner', '/staking', '/wheel'];
-const userStore = useUserStore();
+const errorStore = useErrorStore();
 
 // const useTheme = () => {
 //   const theme = ref('light');
@@ -217,11 +217,13 @@ export default {
       if (newVal && this.$route.path !== newVal) {
         this.$router.push(newVal);
       }
-    }
+    },
   },
   methods: {
     handleTabClick() {
-        useUserStore().showAuthAlert = !this.isAuthenticated;
+        if (!this.isAuthenticated) {
+          errorStore.showError('You must sign in or sign up to continue.');
+        };
     },
     openLogin() {
       this.$emit("show-login-dialog");

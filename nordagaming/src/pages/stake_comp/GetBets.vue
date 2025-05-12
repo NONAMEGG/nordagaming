@@ -54,121 +54,13 @@
   </v-container>
 </template>
 
-<!-- <script setup>
-import { getNFTBettingContract } from "../../contracts/Betting";
-import { ethers } from "ethers";
-import { ref, onMounted, onUnmounted } from "vue";
-
-let pollingInterval;
-const bets = ref([]);
-const gameId = ref(null);
-const bets_amount = ref(null);
-
-const fetchGameId = async () => {
-  try {
-    const contract = await getNFTBettingContract();
-    gameId.value = await contract.gameId();
-    const game = await contract.games(gameId.value);
-    bets_amount.value = ethers.formatEther(game.totalAmount.toString());
-    fetchBets();
-  } catch (error) {
-    console.error(error);
-    alert("Ошибка при получении ID игры");
-  }
-};
-
-const fetchBets = async () => {
-  try {
-    if (!gameId.value) {
-      alert("Идентификатор игры не найден");
-      return;
-    }
-    const contract = await getNFTBettingContract();
-    const betList = await contract.getBets(gameId.value);
-    bets.value = betList;
-  } catch (error) {
-    console.error(error);
-    alert("Ошибка при загрузке ставок");
-  }
-};
-
-onMounted(() => {
-  fetchGameId();
-  pollingInterval = setInterval(() => {
-    fetchGameId();
-  }, 5000);
-});
-
-onUnmounted(() => {
-  clearInterval(pollingInterval);
-});
-</script> -->
-
-<!-- <template>
-  <div class="bids_main_container">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Ставки</h1>
-    
-    <div v-if="bets.length === 0" class="text-lg text-gray-500">Ставки ещё не сделаны.</div>
-
-    <div 
-      v-for="(bet, index) in bets" 
-      :key="index" 
-      class="bid_item"
-      :class="{ 'winner-bet': isWinner(bet.player) }"
-    >
-      <div class="player_id">
-        <span class="font-bold text-lg text-gray-800">Игрок: </span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ bet.player }}</span>
-      </div>
-      <div class="player_bid_amount">
-        <span class="font-bold text-lg text-gray-800">Сумма ставки:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ formatEth(bet.amount) }} ETH</span>
-      </div>
-      <div class="player_odds">
-        <span class="font-bold text-lg text-gray-800">Шанс на победу:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculateWinChance(bet.amount) }}%</span>
-      </div>
-      <div class="potential_win">
-        <span class="font-bold text-lg text-gray-800">Потенциальный выигрыш:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculatePotentialWin(bet.amount) }} ETH</span>
-      </div>
-    </div>
-
-    <button @click="fetchBets" class="button-primary mt-6">
-      Обновить список ставок
-    </button>
-
-    <div v-if="currentGameId !== null" class="text-lg text-gray-500 mt-4">
-      Текущий ID игры: {{ currentGameId }}
-    </div>
-
-    <div v-if="totalAmount !== null" class="text-lg text-gray-500 mt-4">
-      Общая сумма ставок: {{ formatEth(totalAmount) }} ETH
-    </div>
-
-    <div 
-      v-if="winner && winner !== '0x0000000000000000000000000000000000000000'" 
-      class="winner-announcement mt-6 p-4 bg-green-100 rounded-lg"
-    >
-      <h2 class="text-2xl font-bold text-green-800">Победитель игры #{{ currentGameId }}:</h2>
-      <p class="text-xl text-green-600">{{ winner }}</p>
-      <p class="text-lg text-green-600">Выигрыш: {{ formatEth(winningAmount) }} ETH</p>
-      
-      <button 
-        @click="startNewGame"
-        class="button-primary mt-4"
-        :disabled="!canStartNewGame"
-      >
-        Начать новую игру
-      </button>
-    </div>
-  </div>
-</template> -->
-
 <script setup>
 import { getNFTBettingContract } from "../../contracts/Betting";
 import { ethers } from "ethers";
 import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useErrorStore } from '@/stores/errorStore';
+
+const errorStore = useErrorStore();
 
 const bets = ref([]);
 const currentGameId = ref(null); // Переименовано из gameId в currentGameId
@@ -220,7 +112,7 @@ const fetchGameData = async () => {
     
     fetchBets();
   } catch (error) {
-    console.error("Ошибка при получении данных игры:", error);
+    errorStore.showError("Ошибка при получении данных игры: " + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
@@ -232,7 +124,7 @@ const fetchBets = async () => {
     const betList = await contract.getBets(currentGameId.value);
     bets.value = betList;
   } catch (error) {
-    console.error("Ошибка при загрузке ставок:", error);
+    errorStore.showError("Ошибка при загрузке ставок: " + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
@@ -243,8 +135,7 @@ const startNewGame = async () => {
     await tx.wait();
     await fetchGameData();
   } catch (error) {
-    console.error("Ошибка при старте новой игры:", error);
-    alert(`Ошибка: ${error.reason || error.message}`);
+    errorStore.showError("Ошибка при старте новой игры: " + (error?.response?.data?.message || 'Неизвестная ошибка'));
   }
 };
 
