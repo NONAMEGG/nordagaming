@@ -1,18 +1,18 @@
 import RecordService from "../services/RecordService.js";
 
 class RecordController{
-  async getRecord(req, res){
+  async getRecord(req, res, next){
     try{
       const { user_id } = req.params;
       const record = await RecordService.getRecord(user_id);
       res.json({record: record});
     } catch(error){
       console.log('Ошибка при получении счёта пользователя')
-      res.json({message: error.message})
+      next(error);
     }
   }
 
-  async getRecords(req, res){
+  async getRecords(req, res, next){
     try{
       let {limit, page} = req.query;
       limit = parseInt(limit) || 1;
@@ -22,11 +22,11 @@ class RecordController{
       res.json({records: users})
     } catch(error){
       console.log('Ошибка при получении счёта пользователей')
-      res.json({message: error.message})
+      next(error)
     }
   }
   
-  async addRecord(req, res){
+  async addRecord(req, res, next){
     try{
       const total_score = req.body.total_score;
       const user_id = req.params.user_id;
@@ -35,7 +35,7 @@ class RecordController{
       res.json({new_score: new_score}); 
     } catch(error){
       console.log('Ошибка при обновлении рекорда пользователя')
-      res.json({message: error.message});
+      next(error)
     }
   }
 }

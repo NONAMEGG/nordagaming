@@ -1,3 +1,4 @@
+import { InternalServerError } from "../errors/customError.js";
 import { supabase } from "../utils/supabase.js";
 
 
@@ -14,7 +15,7 @@ class TransactionService{
 
     if (error) {
       console.error('Транзакция не была записана: ', error);
-      throw new Error('Ошибка при добавлении транзакции');
+      throw new InternalServerError('Ошибка при добавлении транзакции');
     }
     
     return data;

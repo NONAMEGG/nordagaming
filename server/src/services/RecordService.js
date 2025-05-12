@@ -1,3 +1,4 @@
+import { InternalServerError } from "../errors/customError.js";
 import { supabase } from "../utils/supabase.js"
 import TransactionService from "./TransactionService.js";
 import UserService from "./UserService.js";
@@ -11,7 +12,7 @@ class RecordService{
 
     if(error){
       console.log(error.message)
-      throw Error('Ошибка при получении рекорда');
+      throw new InternalServerError('Ошибка при получении рекорда');
     }
 
     return data;
@@ -33,7 +34,7 @@ class RecordService{
 
     if (error) {
       console.log(error);
-      throw Error('Ошибка при получении пользователей');
+      throw InternalServerError('Ошибка при получении пользователей');
     }
 
     return data; 
@@ -52,7 +53,7 @@ class RecordService{
  
       if (updateError){
         console.log(updateError.message)
-        throw new Error('Ошибка при обновлении счёта');
+        throw new InternalServerError('Ошибка при обновлении счёта');
       } 
     
       await TransactionService.createTransaction(user_id, 'score', new_score);

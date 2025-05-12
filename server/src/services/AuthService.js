@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { supabase } from '../utils/supabase.js';
 import fs from 'fs'
-import { subscribe } from 'diagnostics_channel';
+import { InternalServerError, ServerError } from '../errors/customError.js';
 
 class AuthService{
   async registration(name, email, password, avatar){
@@ -11,7 +11,7 @@ class AuthService{
       .eq('email', email);
     console.log(person_data);
     if(person_data && person_data.length > 0){
-      throw Error('Пользователь с таким email уже существует');
+      throw new ServerError('Пользователь с таким email уже существует');
     }
     console.log('Аватарка', avatar);
     let avatar_url = null;
@@ -32,7 +32,7 @@ class AuthService{
 
       if (storageError) {
         fs.unlinkSync(avatar.path);         
-        throw Error('Ошибка загрузки аватара: ' + storageError.message);
+        throw new InternalServerError('Ошибка загрузки аватара: ' + storageError.message);
       }
 
       const { data: urlData } = supabase.storage
@@ -53,14 +53,14 @@ class AuthService{
       avatar_url: avatar_url,
     }).select('*')
     if(error){
-      throw Error('Ошибка при добавлении пользователя в базу: ', error)
+      throw new InternalServerError('Ошибка при добавлении пользователя в базу: ', error)
     }
     const {error: errorRecords} = await supabase
       .from('records')
       .insert({user_id: data[0].id})
 
     if(errorRecords){
-      throw Error('Ошибка при добавлении записи в рекорды');
+      throw new InternalServerError('Ошибка при добавлении записи в рекорды');
     }
 
     return {
@@ -78,11 +78,11 @@ class AuthService{
       .select('*')
       .eq('email', email);
     if(!data || data.length === 0){
-      throw Error('Пользователь с таким email не существует');
+      throw new ServerError('Пользователь с таким email не существует');
     }
     const verificy = await bcrypt.compare(password, data[0].password);
     if(!verificy){
-      throw Error('Неверный пароль');
+      throw new ServerError('Неверный пароль');
     }
     const {data: dataScore, error: errorScore} = await supabase
       .from('records')
@@ -90,7 +90,7 @@ class AuthService{
       .eq('user_id', data[0].id)
     if(errorScore){ 
       console.log(errorScore.message);
-      throw Error('Ошибка при получении очков пользователя');
+      throw new InternalServerError('Ошибка при получении очков пользователя');
     }
     return {
       id: data[0].id,
@@ -111,7 +111,7 @@ class AuthService{
         .eq('email', email);
       console.log(person_data);
       if(person_data && person_data.length > 0){
-        throw Error('Пользователь с таким email уже существует');
+        throw new ServerError('Пользователь с таким email уже существует');
       }
       else{
         const {data, error} = await supabase
@@ -119,7 +119,7 @@ class AuthService{
           .update({email: email})
           .eq('id', id)
         if(error){
-          throw Error('Ошибка при обновлении почты пользователя');
+          throw new InternalServerError('Ошибка при обновлении почты пользователя');
         }
         newData['email'] = email;
       }
@@ -143,7 +143,7 @@ class AuthService{
 
       if (storageError) {
         fs.unlinkSync(avatar.path);         
-        throw Error('Ошибка загрузки аватара: ' + storageError.message);
+        throw new InternalServerError('Ошибка загрузки аватара: ' + storageError.message);
       }
 
       const { data: urlData } = supabase.storage
@@ -161,7 +161,7 @@ class AuthService{
         .update({avatar_url: avatar_url})
         .eq('id', id)
       if(error){
-        throw Error('Ошибка при обновлении почты пользователя');
+        throw new InternalServerError('Ошибка при обновлении почты пользователя');
       }
       newData['avatar_url'] = avatar_url;
     }
@@ -173,7 +173,7 @@ class AuthService{
       })
       .eq('id', id)
       if(error){
-        throw Error('Ошибка при добавлении пользователя в базу: ', error)
+        throw new InternalServerError('Ошибка при добавлении пользователя в базу: ', error)
       }
       newData['password'] = hashedpassword;
     }
@@ -184,7 +184,7 @@ class AuthService{
       })
       .eq('id', id)
       if(error){
-        throw Error('Ошибка при обновлении пользователя в базе: ', error.message)
+        throw new InternalServerError('Ошибка при обновлении пользователя в базе: ', error.message)
       }
       newData['name'] = name;
     }
