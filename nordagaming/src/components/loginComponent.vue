@@ -91,6 +91,7 @@ export default {
               avatar: response.data.avatar_url,
               total_score: response.data.total_score
             });
+            userStore.isAuthenticatedState = true;
             this.$router.push("/");
           }catch(error){
             console.log('Ошибка при входе:', error);

@@ -78,6 +78,7 @@ async function register() {
         email: response.data.email,
         avatar: response.data.avatar_url
       });
+      userStore.isAuthenticatedState = true;
       router.push("/");
     }
   } catch (err) {

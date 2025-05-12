@@ -4,6 +4,7 @@ import avatarImage from "@/assets/logo.png";
 export const useUserStore = defineStore("user", {
   state: () => {
     const saved = localStorage.getItem('userStoreLocal');
+    console.log(saved);
     if (saved) {
       return JSON.parse(saved);
     }

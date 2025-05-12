@@ -180,7 +180,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(useUserStore, ["isAuthenticatedStateState"]),
+    ...mapState(useUserStore, ["isAuthenticatedState"]),
     route() {
       return this.$route;
     },
