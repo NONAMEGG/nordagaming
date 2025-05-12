@@ -3,7 +3,7 @@ import avatarImage from "@/assets/logo.png";
 
 export const useUserStore = defineStore("user", {
   state: () => {
-    const saved = localStorage.getItem('userStore');
+    const saved = localStorage.getItem('userStoreLocal');
     if (saved) {
       return JSON.parse(saved);
     }
@@ -17,7 +17,7 @@ export const useUserStore = defineStore("user", {
         currentPoints: 0,
         password: "",
       },
-      isAuthenticated: false,
+      isAuthenticatedState: false, // renamed from isAuthenticated
     };
   },
   getters: {
@@ -58,11 +58,11 @@ export const useUserStore = defineStore("user", {
         currentPoints: 0,
         password: "",
       };
-      this.isAuthenticated = false;
+      this.isAuthenticatedState = false;
       this.saveToStorage();
     },
     saveToStorage() {
-      localStorage.setItem('userStore', JSON.stringify(this.$state));
+      localStorage.setItem('userStoreLocal', JSON.stringify(this.$state));
     }
   },
 });

@@ -17,7 +17,7 @@ import { createApp } from "vue";
 const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
-// defineIonPhaser(window);
+// registerPlugins(app);
 registerPlugins(app);
 
 Phaser.GameObjects.GameObjectFactory.register('audio', function (key) {
@@ -26,7 +26,7 @@ Phaser.GameObjects.GameObjectFactory.register('audio', function (key) {
 
 import { useUserStore } from '@/stores/userStore';
 useUserStore().$subscribe((mutation, state) => {
-  localStorage.setItem('userStore', JSON.stringify(state));
+  localStorage.setItem('userStoreLocal', JSON.stringify(state));
 });
 
 app.mount("#app");

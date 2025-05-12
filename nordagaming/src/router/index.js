@@ -35,7 +35,7 @@ router.isReady().then(() => {
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = useUserStore().isAuthenticated;
+  const isAuthenticated = useUserStore().isAuthenticatedState;
   if (to.path === "/runner" && !isAuthenticated) {
     next(from.path);
   } else if (to.path === "/staking" && !isAuthenticated) {

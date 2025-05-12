@@ -25,7 +25,7 @@
           <v-tab to="/" value="/">Home</v-tab>
             <v-tab
             to="/runner"
-            :value="isAuthenticated ? '/runner' : '/'"
+            :value="isAuthenticatedState ? '/runner' : '/'"
             @click="handleTabClick"
             >
             Runner
@@ -33,12 +33,12 @@
           <v-tab 
           to="/staking" 
           @click="handleTabClick" 
-          :value="isAuthenticated ? '/staking' : '/'">
+          :value="isAuthenticatedState ? '/staking' : '/'">
           Staking
         </v-tab>
           <v-tab
            to="/wheel"
-             :value="isAuthenticated ? '/wheel' : '/'"
+             :value="isAuthenticatedState ? '/wheel' : '/'"
              @click="handleTabClick">
              Wheel
             </v-tab>
@@ -51,13 +51,13 @@
             <v-icon icon="mdi-podium"></v-icon>
           </v-btn>
           <v-btn
-            v-if="!isAuthenticated"
+            v-if="!isAuthenticatedState"
             color="primary"
             class="ml-2"
             @click="openLogin"
           >Login</v-btn>
           <v-btn
-            v-if="!isAuthenticated"
+            v-if="!isAuthenticatedState"
             color="secondary"
             class="ml-2"
             :variant= "isSignUpPage ? 'tonal' : 'text'"
@@ -180,7 +180,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(useUserStore, ["isAuthenticated"]),
+    ...mapState(useUserStore, ["isAuthenticatedStateState"]),
     route() {
       return this.$route;
     },
@@ -221,7 +221,7 @@ export default {
   },
   methods: {
     handleTabClick() {
-        if (!this.isAuthenticated) {
+        if (!this.isAuthenticatedState) {
           errorStore.showError('You must sign in or sign up to continue.');
         };
     },
