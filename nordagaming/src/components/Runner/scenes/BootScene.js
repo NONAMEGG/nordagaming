@@ -34,13 +34,6 @@ export default class BootScene extends Phaser.Scene {
 
     async loadCoinSkins() {
         try {
-            // Очистка предыдущих текстур
-            // this.textures.getTextureKeys()
-            //     .filter(key => key.startsWith('coin_'))
-            //     .forEach(key => this.textures.remove(key));
-            
-            // localStorage.removeItem('coinSkins');
-
             const images = await ImageService.fetchCoinImages();
 
             const filteredData = images
@@ -116,13 +109,6 @@ export default class BootScene extends Phaser.Scene {
 
         this.createExtendedProgressBar();
 
-        //await this.loadCoinSkins();
-
-        // const savedSkins = JSON.parse(localStorage.getItem('coinSkins')) || [];
-        // savedSkins.forEach(skin => {
-        //     this.textures.addBase64(`coin_${skin.id}`, skin.data);
-        // });
-
         await this.loadAllResources();
     }
 
@@ -146,6 +132,15 @@ export default class BootScene extends Phaser.Scene {
         this.updateProgress(1);
 
         if (!localStorage.getItem('coinSkins')) await this.loadCoinSkins(); 
+        else {
+            const savedSkins = JSON.parse(localStorage.getItem('coinSkins')) || [];
+            savedSkins.forEach(skin => {
+                const textureKey = `coin_${skin.id}`;
+                if (!this.textures.exists(textureKey)) {
+                    this.textures.addBase64(textureKey, skin.data);
+                }
+            });
+        }
         this.updateProgress(2);
         
         this.fullProgress.bar.destroy();
@@ -168,12 +163,13 @@ export default class BootScene extends Phaser.Scene {
     }
 
     create() {
-        this.scene.launch('UiScene');
-
         if (!this.loadCompleted) {
             this.time.delayedCall(100, this.create.bind(this));
             return;
         }
+
+        this.scene.launch('UiScene');
+
         if (this.soundManager) {
             this.soundManager.destroy();
         }

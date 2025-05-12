@@ -7,11 +7,11 @@ export default class UiScene extends Phaser.Scene {
   
     async create() {
         this.bootScene = this.scene.get('BootScene');
+        // Wait for BootScene to finish loading all resources and textures
         if (!this.bootScene.loadCompleted) {
             this.time.delayedCall(100, this.create.bind(this));
             return;
         }
-
 
         if (this.scoreText) this.scoreText.destroy();
         this.scoreText = this.add.text(50, 50, 'Score: 0', {
@@ -48,14 +48,11 @@ export default class UiScene extends Phaser.Scene {
                 return;
             }
 
-            // Ensure all textures are loaded before creating sprites
-            await this.loadAllCoinTextures(coinSkins);
-
-            // Verify textures exist before creating sprites
+            // No need to load textures here, just check if they exist
             coinSkins.forEach(skin => {
                 const textureKey = `coin_${skin.id}`;
                 if (!this.textures.exists(textureKey)) {
-                    console.error(`Текстура ${textureKey} не была загружена!`);
+                    console.warn(`Текстура ${textureKey} не была загружена!`);
                 }
             });
 
@@ -63,42 +60,6 @@ export default class UiScene extends Phaser.Scene {
         } catch (error) {
             console.error('Ошибка создания кластера:', error);
         }
-    }
-
-    async loadAllCoinTextures(coinSkins) {
-        return new Promise((resolve) => {
-            let loadedCount = 0;
-            const total = coinSkins.length;
-
-            if (total === 0) {
-                resolve();
-                return;
-            }
-
-            coinSkins.forEach(skin => {
-                const textureKey = `coin_${skin.id}`;
-                
-                // Если текстура уже существует, пропускаем
-                if (this.textures.exists(textureKey)) {
-                    loadedCount++;
-                    if (loadedCount === total) resolve();
-                    return;
-                }
-
-                // Загружаем новую текстуру
-                this.textures.addBase64(textureKey, skin.data);
-                
-                // Ждем когда текстура действительно будет готова
-                this.textures.once(`addtexture-${textureKey}`, () => {
-                    loadedCount++;
-                    console.log(`Текстура ${textureKey} загружена`);
-                    
-                    if (loadedCount === total) {
-                        resolve();
-                    }
-                });
-            });
-        });
     }
 
     createCoinSprites(coordinates, coinSkins) {
