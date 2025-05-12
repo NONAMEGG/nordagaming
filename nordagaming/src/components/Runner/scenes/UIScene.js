@@ -48,12 +48,18 @@ export default class UiScene extends Phaser.Scene {
                 return;
             }
 
-            // 1. Сначала загружаем ВСЕ текстуры
+            // Ensure all textures are loaded before creating sprites
             await this.loadAllCoinTextures(coinSkins);
 
-            // 2. После загрузки создаем контейнер и спрайты
+            // Verify textures exist before creating sprites
+            coinSkins.forEach(skin => {
+                const textureKey = `coin_${skin.id}`;
+                if (!this.textures.exists(textureKey)) {
+                    console.error(`Текстура ${textureKey} не была загружена!`);
+                }
+            });
+
             this.createCoinSprites(coordinates, coinSkins);
-            
         } catch (error) {
             console.error('Ошибка создания кластера:', error);
         }

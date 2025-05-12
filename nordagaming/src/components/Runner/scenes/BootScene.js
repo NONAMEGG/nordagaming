@@ -73,13 +73,14 @@ export default class BootScene extends Phaser.Scene {
             
             validSkins.forEach(skin => {
                 try {
-                    const base64Data = skin.data.includes(',') 
-                        ? skin.data.split(',')[1] 
-                        : skin.data;
-                    
-                    this.textures.addBase64(`coin_${skin.id}`, base64Data);
+                    const textureKey = `coin_${skin.id}`;
+                    if (!this.textures.exists(textureKey)) {
+                        this.textures.addBase64(textureKey, skin.data);
+                    } else {
+                        console.warn(`Текстура ${textureKey} уже существует, пропускаем`);
+                    }
                 } catch (e) {
-                    console.error(`Error added texture coin_${skin.id}:`, e);
+                    console.error(`Ошибка добавления текстуры coin_${skin.id}:`, e);
                 }
             });
             
