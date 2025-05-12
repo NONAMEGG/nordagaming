@@ -1,7 +1,7 @@
 import { InternalServerError } from "../errors/customError.js";
 import { supabase } from "../utils/supabase.js"
+import BonusService from "./BonusService.js";
 import TransactionService from "./TransactionService.js";
-import UserService from "./UserService.js";
 
 class RecordService{
   async getRecord(user_id){
@@ -23,6 +23,7 @@ class RecordService{
       .from('records')
       .select(`
         id,
+        user_id,
         total_score,
         users (
           name,
@@ -31,10 +32,17 @@ class RecordService{
       `)
       .order('total_score', { ascending: false })
       .range(offset, offset + limit - 1);
+    
+    for (let item of data){
+      console.log('go')
+      const newValue = await BonusService.getBonus(item.user_id);
+      console.log(newValue);
+      item.total_score += newValue.bonus;
+    }
 
     if (error) {
       console.log(error);
-      throw InternalServerError('Ошибка при получении пользователей');
+      throw new InternalServerError('Ошибка при получении пользователей');
     }
 
     return data; 
