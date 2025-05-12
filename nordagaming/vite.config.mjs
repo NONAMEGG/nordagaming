@@ -64,7 +64,14 @@ export default defineConfig({
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
   server: {
-    port: 3000,
+    proxy: {
+      '/api/download': {
+        target: 'https://thewall.global',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/download/, '/api/download')
+      }
+    }
   },
   css: {
     preprocessorOptions: {
