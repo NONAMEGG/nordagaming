@@ -54,7 +54,7 @@ const errorStore = useErrorStore();
 
 const login = ref('');
 const email = ref('');
-const avatar = ref('');
+const avatar = ref(null);
 const password = ref('');
 const valid = ref(false);
 const form = ref(null);

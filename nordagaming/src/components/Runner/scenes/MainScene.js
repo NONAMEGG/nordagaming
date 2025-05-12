@@ -22,8 +22,8 @@ export default class MainScene extends Phaser.Scene {
         this.gameMaxSpeed = 8;
         this.acceleration = 0.0005;
         this.enemies = this.add.group();
-        this.nextCoinThreshold = 1; //15
-        this.nextCoinThrough = 1;  //20
+        this.nextCoinThreshold = 15; //15
+        this.nextCoinThrough = 20;  //20
         this.baseWaveSpacing = 55;
         this.registry.set('coins', 0);
     }
@@ -162,6 +162,9 @@ export default class MainScene extends Phaser.Scene {
         if (!textureKey.startsWith('coin_')) return; // Пропускаем базовые монеты
 
         if (this.coinsCollected === this.availableSkins.length) {
+            if (this.vueContext && typeof this.vueContext.onVictory === 'function') {
+                this.vueContext.onVictory();
+            }
             this.scene.start('VictoryScene', {
                 coins: this.coinsCollected,
                 vueContext: this.vueContext

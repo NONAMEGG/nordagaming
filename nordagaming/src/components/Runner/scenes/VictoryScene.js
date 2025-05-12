@@ -12,8 +12,10 @@ export default class VictoryScene extends Phaser.Scene {
     create() {
         this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.5)
             .setOrigin(0, 0);
-
+            
+        this.vueContext.onVictory();
         this.vueContext.claimVictoryReward(); //
+        
 
         this.add.text(
             this.cameras.main.centerX,

@@ -25,12 +25,14 @@ export default {
                 console.warn('Unexpected response structure:', response);
                 return mockImages;
             }
-                        
+            console.log(response.cluster.areas);
             return response.cluster.areas
                 .filter(area => area.imageCID?.length > 0)
                 .map((area, index) => ({
                 id: index + 1,
-                url: `${area.imageCID[0]}`
+                url: `${area.imageCID[0]}`,
+                x: area.x,
+                y: area.y
                 }));
             } catch (error) {
                 console.error('Failed to fetch cluster data:', error);

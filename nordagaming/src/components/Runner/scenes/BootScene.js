@@ -39,8 +39,22 @@ export default class BootScene extends Phaser.Scene {
             // localStorage.removeItem('coinSkins');
 
             const images = await ImageService.fetchCoinImages();
-            
-            const skins = await Promise.all(images.map(async img => {
+            console.log(images);
+            const sorted = images.sort((a, b) => {
+                const ay = Number(a.y);
+                const by = Number(b.y);
+                if (ay === by) {
+                    return Number(a.x) - Number(b.x);
+                }
+                return by - ay;
+            });
+            console.log(sorted);
+            // const filteredData = sorted
+            // .filter(image => image.url !== null)
+            // .map(({ id, x, y }) => ({ id, x, y })); 
+            // localStorage.setItem('coordinates', JSON.stringify(filteredData));
+
+            const skins = await Promise.all(sorted.map(async img => {
                 try {
                     const response = await getImage(img.url);
                     const blob = response.data;
@@ -49,7 +63,9 @@ export default class BootScene extends Phaser.Scene {
                         const reader = new FileReader();
                         reader.onloadend = () => resolve({
                             id: img.id,
-                            data: reader.result
+                            data: reader.result,
+                            x: img.x,
+                            y: img.y 
                         });
                         reader.readAsDataURL(blob);
                     });
@@ -60,6 +76,7 @@ export default class BootScene extends Phaser.Scene {
             }));
 
             const validSkins = skins.filter(skin => skin !== null);
+            console.log(validSkins);
             localStorage.setItem('coinSkins', JSON.stringify(validSkins));
             
             validSkins.forEach(skin => {
