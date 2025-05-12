@@ -33,7 +33,7 @@
                     default: 'arcade',
                     arcade: {
                         gravity: { y: 2500 },
-                        debug: false,
+                        debug: true,
                         fixedStep: true
                     }
                 },
@@ -41,7 +41,7 @@
                     mode: Phaser.Scale.WIDTH_CONTROLS_HEIGHT,
                     autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
                 },
-                scene: [BootScene, MainScene, UiScene, GameOverScene, VictoryScene]
+                scene: [BootScene, UiScene, MainScene, GameOverScene, VictoryScene]
             };
 
             this.game = new Phaser.Game(config);

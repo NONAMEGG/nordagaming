@@ -35,7 +35,7 @@ export default class MainScene extends Phaser.Scene {
         this.soundManager = this.scene.get('BootScene').soundManager;
 
         this.physics.world.createDebugGraphic();
-        this.physics.world.drawDebug = false;
+        this.physics.world.drawDebug = true;
 
         this.createBackground();
 

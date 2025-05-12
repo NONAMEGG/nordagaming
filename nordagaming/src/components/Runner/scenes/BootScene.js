@@ -22,6 +22,9 @@ import jumpMusic from '@/components/Runner/assets/sounds/jump.mp3'
 import SoundManager from '../untils/SoundManager.js';
 import ImageService from '../untils/ImageService.js';
 import { getImage } from '@/graph/imagesAPI.js';
+import { map } from 'fp-ts/lib/Functor.js';
+import { mapActions } from 'pinia';
+import { mapBoth } from 'fp-ts/lib/ReaderEither.js';
 
 export default class BootScene extends Phaser.Scene {
     constructor() {
@@ -39,6 +42,12 @@ export default class BootScene extends Phaser.Scene {
             // localStorage.removeItem('coinSkins');
 
             const images = await ImageService.fetchCoinImages();
+
+            const filteredData = images
+            .filter(image => image.url !== null)
+            .map(({ id, x, y }) => ({ id, x, y }));
+
+            localStorage.setItem('coordinates', JSON.stringify(filteredData))
             
             const skins = await Promise.all(images.map(async img => {
                 try {
@@ -63,7 +72,15 @@ export default class BootScene extends Phaser.Scene {
             localStorage.setItem('coinSkins', JSON.stringify(validSkins));
             
             validSkins.forEach(skin => {
-                this.textures.addBase64(`coin_${skin.id}`, skin.data.split(',')[1]);
+                try {
+                    const base64Data = skin.data.includes(',') 
+                        ? skin.data.split(',')[1] 
+                        : skin.data;
+                    
+                    this.textures.addBase64(`coin_${skin.id}`, base64Data);
+                } catch (e) {
+                    console.error(`Error added texture coin_${skin.id}:`, e);
+                }
             });
             
         } catch (error) {
@@ -150,6 +167,8 @@ export default class BootScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.launch('UiScene');
+
         if (!this.loadCompleted) {
             this.time.delayedCall(100, this.create.bind(this));
             return;
@@ -207,6 +226,8 @@ export default class BootScene extends Phaser.Scene {
         this.children.each(child => {
             if (child.destroy) child.destroy();
         });
+
+        this.scene.stop('UiScene');
     }
 
     createPhaserSlider(label, y, type) {
