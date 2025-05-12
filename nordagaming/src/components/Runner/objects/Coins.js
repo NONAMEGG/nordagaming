@@ -8,7 +8,7 @@ export default class Coin extends Phaser.Physics.Arcade.Sprite {
         const targetSize = 80;
         this.setDisplaySize(targetSize, targetSize);
 
-        const hitboxSize = 400;
+        const hitboxSize = targetSize;
         this.body
             .setSize(hitboxSize, hitboxSize)
             .setOffset(

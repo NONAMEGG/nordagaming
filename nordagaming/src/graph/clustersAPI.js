@@ -22,5 +22,5 @@ export const getCluster = async () => {
         withCredentials: false
       }
   )
-  return response;
+  return response.data.data;
 }
