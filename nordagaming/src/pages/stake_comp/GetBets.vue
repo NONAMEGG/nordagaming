@@ -1,57 +1,57 @@
 <template>
-  <v-container class="py-8">
-    <v-row>
-      <v-col cols="12">
-        <v-card class="pa-6">
-          <v-card-title class="text-h4 font-weight-bold mb-4">Ставки</v-card-title>
-
-          <v-btn
-            color="primary"
-            class="mt-6"
-            @click="fetchBets"
-            prepend-icon="mdi-refresh"
-          >
-            Обновить список ставок
-          </v-btn>
+    <div 
+      v-for="(bet, index) in bets" 
+      :key="index" 
+      class="bid_item"
+      :class="{ 'winner-bet': isWinner(bet.player) }"
+    >
+      <div class="player_id">
+        <span class="font-bold text-lg text-gray-800">Игрок: </span>
+        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ bet.player }}</span>
+      </div>
+      <div class="player_bid_amount">
+        <span class="font-bold text-lg text-gray-800">Сумма ставки:</span>
+        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ formatEth(bet.amount) }} ETH</span>
+      </div>
+      <div class="player_odds">
+        <span class="font-bold text-lg text-gray-800">Шанс на победу:</span>
+        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculateWinChance(bet.amount) }}%</span>
+      </div>
+      <div class="potential_win">
+        <span class="font-bold text-lg text-gray-800">Потенциальный выигрыш:</span>
+        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculatePotentialWin(bet.amount) }} ETH</span>
+      </div>
+    </div>
 
           <v-divider class="my-6"></v-divider>
           <v-alert v-if="bets.length === 0" type="info" class="mb-4">
             Ставки ещё не сделаны.
           </v-alert>
 
-          <v-list v-else>
-            <v-list-item
-              v-for="(bet, index) in bets"
-              :key="index"
-              class="mb-4"
-              color="grey-lighten-4"
-            >
-              <v-list-item-content>
-                <div class="d-flex flex-column">
-                  <div>
-                    <span class="font-weight-bold">Игрок:</span>
-                    <span class="text-red-darken-2 ms-2">{{ bet.player }}</span>
-                  </div>
-                  <div>
-                    <span class="font-weight-bold">Сумма ставки:</span>
-                    <span class="text-red-darken-2 ms-2">{{ ethers.formatEther(bet.amount) }} ETH</span>
-                  </div>
-                </div>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
+    <div v-if="currentGameId !== null" class="text-lg text-gray-500 mt-4">
+      Текущий ID игры: {{ currentGameId }}
+    </div>
 
-          <v-alert v-if="gameId !== null" type="info" class="mb-4">
-            Текущий ID игры: {{ gameId }}
-          </v-alert>
+    <div v-if="totalAmount !== null" class="text-lg text-gray-500 mt-4">
+      Общая сумма ставок: {{ formatEth(totalAmount) }} ETH
+    </div>
 
-          <v-alert v-if="bets_amount !== null" type="info">
-            Сумма ставок {{ bets_amount }} ETH
-          </v-alert>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+    <div 
+      v-if="winner && winner !== '0x0000000000000000000000000000000000000000'" 
+      class="winner-announcement mt-6 p-4 bg-green-100 rounded-lg"
+    >
+      <h2 class="text-2xl font-bold text-green-800">Победитель игры #{{ currentGameId }}:</h2>
+      <p class="text-xl text-green-600">{{ winner }}</p>
+      <p class="text-lg text-green-600">Выигрыш: {{ formatEth(winningAmount) }} ETH</p>
+      
+      <button 
+        @click="startNewGame"
+        class="button-primary mt-4"
+        :disabled="!canStartNewGame"
+      >
+        Начать новую игру
+      </button>
+    </div>
 </template>
 
 <script setup>
@@ -104,6 +104,7 @@ const fetchGameData = async () => {
   try {
     const contract = await getNFTBettingContract();
     currentGameId.value = await contract.gameId();
+    
     const game = await contract.games(currentGameId.value);
     totalAmount.value = game.totalAmount.toString();
     winner.value = game.winner;
@@ -112,7 +113,7 @@ const fetchGameData = async () => {
     
     fetchBets();
   } catch (error) {
-    errorStore.showError("Ошибка при получении данных игры: " + (error?.response?.data?.message || 'Неизвестная ошибка'));
+    console.error("Ошибка при получении данных игры:", error);
   }
 };
 
@@ -150,7 +151,7 @@ onUnmounted(() => {
 });
 </script>
 
-<!-- <style scoped>
+<style scoped>
 .bids_main_container {
   margin: 0 auto;
   padding: 20px;
@@ -203,4 +204,4 @@ onUnmounted(() => {
 .winner-announcement {
   border: 2px solid #4ade80;
 }
-</style> -->
+</style>

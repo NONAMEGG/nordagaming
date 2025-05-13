@@ -1,8 +1,6 @@
 import { ethers } from "ethers";
-// import NFTBettingABI from "./nftBetting.json"; 
-// import MockNFTABI from "./nftabi.json";
-import MockNFT from '../../artifacts/contracts/MockNFT.sol/MockNFT.json';
-import NFTBetting from '../../artifacts/contracts/NFTBetting.sol/NFTBetting.json';
+import NFTBettingABI from "./nftBetting.json"; 
+import MockNFTABI from "./nftabi.json";
 import contractAddresses from "./contract-addresses.json";
 
 
@@ -16,8 +14,7 @@ export async function getNFTBettingContract() {
   
   return new ethers.Contract(
     contractAddresses.NFTBetting, 
-    //NFTBettingABI, 
-    NFTBetting.abi,
+    NFTBettingABI, 
     signer
   );
 }
@@ -31,8 +28,7 @@ export async function getMockNFTContract() {
   
   return new ethers.Contract(
     contractAddresses.MockNFT, 
-    //MockNFTABI,
-    MockNFT.abi,
+    MockNFTABI,
     signer
   );
 }
