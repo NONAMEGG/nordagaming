@@ -16,17 +16,6 @@ app.use(errorHandler)
 
 const start = async () =>{
   try{
-    const { data: dropData, error: dropError } = await supabase
-      .rpc('drop_tables');
-
-    if (dropError) {
-      console.error('Ошибка при удалении таблиц:', dropError);
-      return;
-    }
-    console.log('Таблицы удалены (если существовали).', dropData);
-    
-    await CreateTables(supabase); 
-    console.log('Таблицы были созданы');
 
     const userCount = 30; // Количество пользователей
     const { data: insertData, error: insertError } = await supabase

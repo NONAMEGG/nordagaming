@@ -8,6 +8,20 @@
 >
   You can't spin the wheel right now.
 </v-alert>
+
+  <v-dialog v-model="showWinDialog" max-width="400">
+    <v-card>
+      <v-card-title class="headline">Congratulations!</v-card-title>
+      <v-card-text>
+        You won <b>{{ winAmount }}</b> points!
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" text @click="showWinDialog = false">OK</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <v-container class="fill-height">
 
     <v-responsive class="fill-height mx-auto text-center" max-width="900">
@@ -57,6 +71,8 @@ export default {
       showTimerAlert: false,
       isSpinning: false,
       canSpin: true,
+      showWinDialog: false,
+      winAmount: null,
       items: [
         // очки в топ юзеров
         {
@@ -127,7 +143,11 @@ export default {
     async wheelEndedCallback(evt) {
       this.canSpin = false;
       console.log(evt);
-      const response = await bonusSave(userStore.getUserId, evt.name)
+      const response = await bonusSave(userStore.getUserId, evt.name);
+      localStorage.setItem("", evt.name);
+      // Show win dialog
+      this.winAmount = evt.name;
+      this.showWinDialog = true;
     },
     canUseWheel() {
       return this.canSpin;
