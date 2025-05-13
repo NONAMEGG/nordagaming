@@ -1,28 +1,47 @@
 import fs from 'fs';
-import pkg from 'hardhat';
-const { ethers } = pkg;
+import Web3 from 'web3';
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
-  console.log("Deploying contracts with the account:", deployer.address);
+  // Подключаемся к провайдеру (например, Hardhat)
+  const web3 = new Web3('http://localhost:8545');
+  
+  // Получаем аккаунты
+  const accounts = await web3.eth.getAccounts();
+  const deployer = accounts[0];
+  console.log("Deploying contracts with the account:", deployer);
 
-  // Развертывание контрактов
-  const MockNFT = await ethers.getContractFactory("MockNFT");
-  const nftContract = await MockNFT.deploy();
-  await nftContract.waitForDeployment();
-  const nftContractAddress = await nftContract.getAddress();
+  // Получаем ABI и bytecode контрактов
+  const MockNFT = JSON.parse(fs.readFileSync('./artifacts/contracts/MockNFT.sol/MockNFT.json'));
+  const NFTBetting = JSON.parse(fs.readFileSync('./artifacts/contracts/NFTBetting.sol/NFTBetting.json'));
 
-  const minimumBet = ethers.parseEther("0.1");
-  const NFTBetting = await ethers.getContractFactory("NFTBetting");
-  const nftBetting = await NFTBetting.deploy(minimumBet, nftContractAddress);
-  await nftBetting.waitForDeployment();
-  const nftBettingAddress = await nftBetting.getAddress();
+  // Развертывание MockNFT
+  const mockNFT = new web3.eth.Contract(MockNFT.abi);
+  const nftContract = await mockNFT.deploy({
+    data: MockNFT.bytecode
+  }).send({
+    from: deployer,
+    gas: 5000000
+  });
+  const nftContractAddress = nftContract.options.address;
+
+  // Развертывание NFTBetting
+  const minimumBet = web3.utils.toWei('0.1', 'ether');
+  const nftBetting = new web3.eth.Contract(NFTBetting.abi);
+  const bettingContract = await nftBetting.deploy({
+    data: NFTBetting.bytecode,
+    arguments: [minimumBet, nftContractAddress]
+  }).send({
+    from: deployer,
+    gas: 5000000
+  });
+  const nftBettingAddress = bettingContract.options.address;
 
   // Сохраняем адреса в JSON файл
+  const networkId = await web3.eth.net.getId();
   const contractsData = {
     MockNFT: nftContractAddress,
     NFTBetting: nftBettingAddress,
-    network: (await ethers.provider.getNetwork()).name
+    network: networkId.toString()
   };
 
   fs.writeFileSync('./src/contracts/contract-addresses.json', JSON.stringify(contractsData, null, 2));

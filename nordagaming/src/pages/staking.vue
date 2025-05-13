@@ -1,7 +1,5 @@
 <template>
   <div class="main_window">
-   
-    
     <div class="game-status">
       <p>Текущая игра: #{{ currentGameId }}</p>
       <p>Статус: {{ gameEnded ? 'Завершена' : 'Активна' }}</p>
@@ -10,17 +8,17 @@
     </div>
 
     <div class="mb-4">
-  <label for="customBet" class="block text-gray-700">Сумма ставки (ETH):</label>
-  <input
-    id="customBet"
-    v-model="customBetAmount"
-    type="number"
-    step="0.01"
-    min="0"
-    class="border border-gray-300 rounded px-3 py-2 w-full"
-    :disabled="!canBet"
-  />
-</div>
+      <label for="customBet" class="block text-gray-700">Сумма ставки (ETH):</label>
+      <input
+        id="customBet"
+        v-model="customBetAmount"
+        type="number"
+        step="0.01"
+        min="0"
+        class="border border-gray-300 rounded px-3 py-2 w-full"
+        :disabled="!canBet"
+      />
+    </div>
     
     <button
       @click="placeBet"
@@ -58,7 +56,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { ethers } from 'ethers';
+import Web3 from 'web3';
 import { getNFTBettingContract, getMockNFTContract } from "../contracts/Betting";
 import GetBets from "./stake_comp/GetBets.vue";
 import CountDown from "./stake_comp/Countdown.vue";
@@ -72,7 +70,6 @@ const totalBets = ref('0');
 const bettingEndTime = ref(0);
 const customBetAmount = ref('');
 
-
 const canBet = computed(() => {
   return !gameEnded.value && nftDeposited.value;
 });
@@ -80,16 +77,16 @@ const canBet = computed(() => {
 const initGameData = async () => {
   try {
     const contract = await getNFTBettingContract();
-    currentGameId.value = await contract.gameId();
+    currentGameId.value = await contract.methods.gameId().call();
     
-    const game = await contract.games(currentGameId.value);
+    const game = await contract.methods.games(currentGameId.value).call();
     gameEnded.value = game.ended;
-    totalBets.value = ethers.formatEther(game.totalAmount.toString());
+    totalBets.value = Web3.utils.fromWei(game.totalAmount, 'ether');
     
-    nftDeposited.value = await contract.nftDeposited();
-    nftId.value = await contract.nftId();
-    bettingEndTime.value = await contract.bettingEndTime();
-    minimumBet.value = ethers.formatEther(await contract.minimumBet());
+    nftDeposited.value = await contract.methods.nftDeposited().call();
+    nftId.value = await contract.methods.nftId().call();
+    bettingEndTime.value = await contract.methods.bettingEndTime().call();
+    minimumBet.value = Web3.utils.fromWei(await contract.methods.minimumBet().call(), 'ether');
   } catch (error) {
     console.error('Ошибка инициализации:', error);
   }
@@ -103,11 +100,14 @@ const placeBet = async () => {
       return;
     }
 
-    const betInWei = ethers.parseEther(betValue.toString());
-
+    const betInWei = Web3.utils.toWei(betValue.toString(), 'ether');
     const contract = await getNFTBettingContract();
-    const tx = await contract.placeBet({ value: betInWei });
-    await tx.wait();
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+    await contract.methods.placeBet().send({
+      from: accounts[0],
+      value: betInWei
+    });
 
     alert("Ставка принята!");
     customBetAmount.value = ''; 
@@ -117,30 +117,26 @@ const placeBet = async () => {
     alert(`Ошибка при ставке: ${error.message}`);
   }
 };
+
 const depositNFT = async () => {
   try {
     const nft = await getMockNFTContract();
     const betting = await getNFTBettingContract();
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
 
     const tokenId = 0;
     try {
-      const owner = await nft.ownerOf(tokenId);
-      if (owner.toLowerCase() !== signer.address.toLowerCase()) {
-        const mintTx = await nft.mint(signer.address);
-        await mintTx.wait();
+      const owner = await nft.methods.ownerOf(tokenId).call();
+      if (owner.toLowerCase() !== account.toLowerCase()) {
+        await nft.methods.mint(account).send({ from: account });
       }
     } catch (e) {
-      const mintTx = await nft.mint(signer.address);
-      await mintTx.wait();
+      await nft.methods.mint(account).send({ from: account });
     }
 
-    const approveTx = await nft.approve(betting.target, tokenId);
-    await approveTx.wait();
-
-    const depositTx = await betting.depositNFT(tokenId);
-    await depositTx.wait();
+    await nft.methods.approve(betting.options.address, tokenId).send({ from: account });
+    await betting.methods.depositNFT(tokenId).send({ from: account });
 
     alert("NFT внесён успешно!");
     await initGameData();
@@ -150,12 +146,12 @@ const depositNFT = async () => {
   }
 };
 
-
 const endGameEarly = async () => {
   try {
     const contract = await getNFTBettingContract();
-    const tx = await contract.endGameEarly();
-    await tx.wait();
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+    await contract.methods.endGameEarly().send({ from: accounts[0] });
     alert("Игра завершена досрочно!");
     await initGameData();
   } catch (error) {
@@ -164,22 +160,9 @@ const endGameEarly = async () => {
   }
 };
 
-// Проверка окончания игры
-const checkGameEnd = async () => {
-  try {
-    const contract = await getNFTBettingContract();
-    const tx = await contract.checkGameEnd();
-    await tx.wait();
-    await initGameData();
-  } catch (error) {
-    console.error('Ошибка проверки окончания:', error);
-  }
-};
-
-// Периодическое обновление данных
 onMounted(async () => {
   await initGameData();
-  setInterval(initGameData, 15000); // Обновление каждые 15 сек
+  setInterval(initGameData, 15000);
 });
 </script>
 

@@ -77,7 +77,7 @@ contract NFTBetting is IERC721Receiver {
         emit NewGameStarted(gameId);
     }
 
-    function depositNFT(uint _tokenId) external onlyOwner {
+     function depositNFT(uint _tokenId) external onlyOwner {
         require(!nftDeposited, "NFT already deposited");
         nftContract.safeTransferFrom(msg.sender, address(this), _tokenId);
         nftId = _tokenId;
@@ -85,7 +85,7 @@ contract NFTBetting is IERC721Receiver {
         bettingEndTime = block.timestamp + BETTING_DURATION;
         emit NFTDeposited(msg.sender, _tokenId);
     }
-
+    
     function placeBet() external payable bettingOpen {
         require(msg.value >= minimumBet, "Bet amount is less than minimum");
         

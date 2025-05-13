@@ -9,9 +9,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ethers } from 'ethers'
+import Web3 from 'web3'
 import contractABI from '../../contracts/nftBetting.json'
-import contractAddresses from '../../contracts/contract-addresses.json' // Импортируем адреса
+import contractAddresses from '../../contracts/contract-addresses.json'
 
 const timeLeft = ref('')
 const bettingEndTime = ref(0)
@@ -25,18 +25,14 @@ const loadContract = async () => {
   try {
     if (!window.ethereum) throw new Error('MetaMask не установлен')
     
-    const provider = new ethers.BrowserProvider(window.ethereum)
-    const signer = await provider.getSigner()
-    
-    // Используем адрес из JSON файла
-    contract = new ethers.Contract(
-      contractAddresses.NFTBetting, 
-      contractABI, 
-      signer
+    const web3 = new Web3(window.ethereum);
+    contract = new web3.eth.Contract(
+      contractABI,
+      contractAddresses.NFTBetting
     )
   } catch (err) {
     console.error('Ошибка инициализации контракта:', err)
-    throw err // Можно обработать ошибку в компоненте выше
+    throw err
   }
 }
 
@@ -47,8 +43,8 @@ const fetchGameState = async () => {
 
   try {
     const [endTime, isDeposited] = await Promise.all([
-      contract.bettingEndTime(),
-      contract.nftDeposited()
+      contract.methods.bettingEndTime().call(),
+      contract.methods.nftDeposited().call()
     ])
     bettingEndTime.value = Number(endTime)
     nftDeposited.value = isDeposited

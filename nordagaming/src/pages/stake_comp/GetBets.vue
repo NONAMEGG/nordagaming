@@ -61,11 +61,11 @@
 
 <script setup>
 import { getNFTBettingContract } from "../../contracts/Betting";
-import { ethers } from "ethers";
+import Web3 from "web3";
 import { ref, onMounted, onUnmounted, computed } from "vue";
 
 const bets = ref([]);
-const currentGameId = ref(null); // Переименовано из gameId в currentGameId
+const currentGameId = ref(null);
 const totalAmount = ref("0");
 const winner = ref(null);
 const winningAmount = ref("0");
@@ -74,18 +74,19 @@ const PLATFORM_FEE_PERCENT = 10;
 const WINNER_PERCENT = 90;
 
 const formatEth = (wei) => {
-  return parseFloat(ethers.formatEther(wei)).toFixed(4);
+  return parseFloat(Web3.utils.fromWei(wei, 'ether')).toFixed(4);
 };
 
 const calculateWinChance = (betAmount) => {
   if (totalAmount.value === "0") return "0.00";
-  const chance = (parseFloat(ethers.formatEther(betAmount)) / parseFloat(ethers.formatEther(totalAmount.value))) * 100;
+  const chance = (parseFloat(Web3.utils.fromWei(betAmount, 'ether')) / 
+                parseFloat(Web3.utils.fromWei(totalAmount.value, 'ether'))) * 100;
   return chance.toFixed(2);
 };
 
 const calculatePotentialWin = (betAmount) => {
   if (totalAmount.value === "0") return "0.00";
-  const totalPool = parseFloat(ethers.formatEther(totalAmount.value));
+  const totalPool = parseFloat(Web3.utils.fromWei(totalAmount.value, 'ether'));
   const potentialWin = totalPool * (WINNER_PERCENT / 100);
   return potentialWin.toFixed(4);
 };
@@ -105,15 +106,15 @@ const canStartNewGame = computed(() => {
 const fetchGameData = async () => {
   try {
     const contract = await getNFTBettingContract();
-    currentGameId.value = await contract.gameId();
+    currentGameId.value = await contract.methods.gameId().call();
     
-    const game = await contract.games(currentGameId.value);
-    totalAmount.value = game.totalAmount.toString();
+    const game = await contract.methods.games(currentGameId.value).call();
+    totalAmount.value = game.totalAmount;
     winner.value = game.winner;
-    winningAmount.value = game.winningAmount.toString();
+    winningAmount.value = game.winningAmount;
     isGameEnded.value = game.ended;
     
-    fetchBets();
+    await fetchBets();
   } catch (error) {
     console.error("Ошибка при получении данных игры:", error);
   }
@@ -124,8 +125,10 @@ const fetchBets = async () => {
     if (!currentGameId.value) return;
 
     const contract = await getNFTBettingContract();
-    const betList = await contract.getBets(currentGameId.value);
+    const betList = await contract.methods.getBets(currentGameId.value).call();
     bets.value = betList;
+    console.log(betList);
+    
   } catch (error) {
     console.error("Ошибка при загрузке ставок:", error);
   }
@@ -134,12 +137,13 @@ const fetchBets = async () => {
 const startNewGame = async () => {
   try {
     const contract = await getNFTBettingContract();
-    const tx = await contract.startNewGame();
-    await tx.wait();
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+    await contract.methods.startNewGame().send({ from: accounts[0] });
     await fetchGameData();
   } catch (error) {
     console.error("Ошибка при старте новой игры:", error);
-    alert(`Ошибка: ${error.reason || error.message}`);
+    alert(`Ошибка: ${error.message}`);
   }
 };
 
@@ -149,8 +153,15 @@ onMounted(() => {
   pollingInterval = setInterval(fetchGameData, 5000);
 });
 
-onUnmounted(() => {
-  clearInterval(pollingInterval);
+onMounted(() => {
+  fetchGameData();
+  pollingInterval = setInterval(fetchGameData, 5000);
+
+  if (window.ethereum) {
+    window.ethereum.on("accountsChanged", () => {
+      fetchGameData(); // повторный фетч при смене аккаунта
+    });
+  }
 });
 </script>
 
