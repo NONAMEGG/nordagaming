@@ -1,4 +1,5 @@
 import { InternalServerError, ServerError } from "../errors/customError.js";
+import TransactionService from "./TransactionService.js";
 import { supabase } from "../utils/supabase.js"  
 class BonusService{
   async validateSpin(user_id, intervalHours = 0.016667){
@@ -22,6 +23,8 @@ class BonusService{
     if(error){
       throw new InternalServerError('Ошибка при добавлении бонуса в базу') 
     };
+
+    await TransactionService.createTransaction(user_id, 'rulet_bonus', parseInt(bonus));
 
     return data[0].bonus;
   }

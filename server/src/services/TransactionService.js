@@ -20,6 +20,20 @@ class TransactionService{
     
     return data;
   }
+
+  async getUserTransactions(user_id){
+    const {data, error} = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', user_id);
+
+    if(error){
+
+      throw new InternalServerError('Ошибка при получении транзакции');
+    }
+
+    return data;
+  }
 }
 
 export default new TransactionService();
