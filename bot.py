@@ -1,269 +1,200 @@
-import os
-import re
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from dotenv import load_dotenv
+import logging
+import requests
+from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ConversationHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
-load_dotenv()
-bot = Bot(token=os.getenv("BOT_TOKEN"))
-dp = Dispatcher()
+BASE_URL = "http://localhost:3001/api"
 
-# --- Заглушки данных ---
-STUB_DATA = {
-    "auth_users": {
-        "test@example.com": {"password": "123", "balance": 1000, "game_id": "123", "best_score": 0}
-    },
-    "sessions": {},  # telegram_id: email
-    "bets": [
-        {"id": 1, "game_id": "123", "amount": 100, "status": "Выигрыш"},
-        {"id": 2, "game_id": "123", "amount": 50, "status": "Проигрыш"}
-    ],
-    "leaderboard": [
-        {"username": "Player1", "score": 5000},
-        {"username": "Player2", "score": 4000}
+ASK_EMAIL, ASK_PASSWORD = range(2)
+SESSIONS = {}
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        ["/login", "/logout"],
+        ["/leaders", "/points", "/transactions"]
     ]
-}
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-# --- Состояния FSM ---
-class AuthStates(StatesGroup):
-    waiting_for_email = State()
-    waiting_for_password = State()
+    await update.message.reply_text(
+        "Привет!\nВыберите команду:",
+        reply_markup=reply_markup
+    )
 
-class MenuStates(StatesGroup):
-    in_wallet = State()
-    in_bets = State()
-    waiting_for_bet_amount = State()
-    waiting_for_deposit = State()
+# ========== Логин ==========
+async def login_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Введите ваш email:")
+    return ASK_EMAIL
 
-# --- Клавиатуры ---
-def get_main_menu(user_id: int = None):
-    buttons = [
-        [KeyboardButton(text="💰 Кошелёк"), KeyboardButton(text="🎲 Ставки")],
-        [KeyboardButton(text="🏆 Таблица лидеров"), KeyboardButton(text="📊 Моя статистика")]
-    ]
-    
-    if user_id and user_id in STUB_DATA["sessions"]:
-        buttons.append([KeyboardButton(text="🚪 Выйти")])
+async def ask_password(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["email"] = update.message.text.strip()
+    await update.message.reply_text("Теперь — пароль:")
+    return ASK_PASSWORD
+
+async def do_login(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    email = context.user_data.get("email")
+    password = update.message.text.strip()
+    try:
+        resp = requests.post(
+            f"{BASE_URL}/user/login",
+            json={"email": email, "password": password},
+            timeout=5
+        )
+        resp.raise_for_status()
+        user = resp.json()
+
+        SESSIONS[chat_id] = {
+            'id': user['id'],
+            'email': user['email'],
+            'total_score': user.get('total_score', 0)
+        }
+
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Мои очки", callback_data="points")],
+            [InlineKeyboardButton("Топ игроков", callback_data="leaders")]
+        ])
+
+        await update.message.reply_text(
+            f"✅ Успешный вход: {user.get('name')}\n"
+            f"💰 Ваши очки: {user.get('total_score', 0)}",
+        )
+    except requests.HTTPError as e:
+        err = e.response.text
+        await update.message.reply_text(f"Ошибка авторизации: {err}")
+    except Exception as e:
+        await update.message.reply_text(f"Сетевая ошибка: {e}")
+
+# ========== Выход из аккаунта ==========
+async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    if chat_id in SESSIONS:
+        del SESSIONS[chat_id]
+        await update.message.reply_text("Вы вышли из аккаунта.")
     else:
-        buttons.append([KeyboardButton(text="🔐 Войти")])
-    
-    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+        await update.message.reply_text("Вы не авторизованы.")
 
-def get_wallet_menu():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="История"), KeyboardButton(text="Пополнить")],
-            [KeyboardButton(text="🔙 Назад")]
-        ],
-        resize_keyboard=True
-    )
+# ========== Лидерборд ==========
+async def leaders(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.id not in SESSIONS:
+        await update.message.reply_text("Сначала выполните /login")
+        return
 
-def get_bets_menu():
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Создать ставку"), KeyboardButton(text="Мои ставки")],
-            [KeyboardButton(text="🔙 Назад")]
-        ],
-        resize_keyboard=True
-    )
-
-# --- Проверка авторизации ---
-def check_auth(func):
-    async def wrapper(message: types.Message, *args, **kwargs):
-        if message.from_user.id not in STUB_DATA["sessions"]:
-            await message.answer("❌ Сначала авторизуйтесь через /login!", reply_markup=get_main_menu())
+    try:
+        resp = requests.get(
+            f"{BASE_URL}/records",
+            params={"limit": 10, "page": 1},
+            timeout=5
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        recs = data.get('records', [])
+        recs = sorted(
+            recs,
+            key=lambda r: r.get('total_score', r.get('score', 0)),
+            reverse=True
+)
+        if not recs:
+            await update.message.reply_text("Пока нет записей.")
             return
-        return await func(message, *args, **kwargs)
-    return wrapper
 
-# --- Команда /start ---
-@dp.message(Command("start"))
-async def start(message: types.Message):
-    await message.answer(
-        "🏃 Добро пожаловать в RunnerBot!",
-        reply_markup=get_main_menu(message.from_user.id)
-    )
+        text = "🏆 Топ-10:\n"
+        for i, r in enumerate(recs, 1):
+            name = r.get("name") or f"User {r['id']}"
+            text += f"{i}. {name}: {r['total_score']}\n"
+        await update.message.reply_text(text)
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка при получении лидеров: {e}")
 
-# --- Авторизация ---
-@dp.message(Command("login"))
-@dp.message(F.text == "🔐 Войти")
-async def start_auth(message: types.Message, state: FSMContext):
-    await message.answer("📧 Введите ваш email:", reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(AuthStates.waiting_for_email)
-
-@dp.message(AuthStates.waiting_for_email)
-async def process_email(message: types.Message, state: FSMContext):
-    email = message.text.lower()
-    
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        await message.answer("❌ Неверный формат email! Попробуйте снова:")
+# ========== Ваши очки ==========
+async def points(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    session = SESSIONS.get(chat_id)
+    if not session:
+        await update.message.reply_text("Сначала выполните /login")
         return
-        
-    if email not in STUB_DATA["auth_users"]:
-        await message.answer("❌ Пользователь не найден!", reply_markup=get_main_menu())
-        await state.clear()
+
+    user_id = session['id']
+    try:
+        resp = requests.get(
+            f"{BASE_URL}/records/{user_id}",
+            timeout=5
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        record_data = data.get('record')
+        # record_data может быть списком или dict
+        if isinstance(record_data, list) and record_data:
+            record = record_data[0]
+        elif isinstance(record_data, dict):
+            record = record_data
+        else:
+            record = {}
+
+        total = record.get('total_score', session.get('total_score', 0))
+        await update.message.reply_text(f"🎯 Ваши очки: {total}")
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка при получении ваших очков: {e}")
+
+async def transactions(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    session = SESSIONS.get(chat_id)
+    if not session:
+        await update.message.reply_text("Сначала выполните /login")
         return
-        
-    await state.update_data(email=email)
-    await message.answer("🔑 Введите пароль:")
-    await state.set_state(AuthStates.waiting_for_password)
+    user_id = session['id']
+    try:
+        resp = requests.get(f"{BASE_URL}/transaction/{user_id}", timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+        txs = data.get('data', [])
+        if not txs:
+            await update.message.reply_text("У вас нет транзакций.")
+            return
+        text = "💼 Ваши транзакции:\n\n"
+        for tx in txs:
+            ttype = tx.get('type', '?')
+            amt = tx.get('amount', 0)
+            created = tx.get('created_at', '')
+            text += f"• [{created}] {ttype}: {amt}\n"
+        await update.message.reply_text(text)
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка при получении транзакций: {e}")
+async def handle_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.error(f"Ошибка: {context.error}")
+    await update.message.reply_text("Произошла ошибка. Попробуйте еще раз позже.")
 
-@dp.message(AuthStates.waiting_for_password)
-async def process_password(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    email = data["email"]
-    
-    if message.text != STUB_DATA["auth_users"][email]["password"]:
-        await message.answer("❌ Неверный пароль! Попробуйте снова:")
-        return
-        
-    STUB_DATA["sessions"][message.from_user.id] = email
-    await message.answer(
-        f"✅ Успешная авторизация! Добро пожаловать, {email}",
-        reply_markup=get_main_menu(message.from_user.id)
-    )
-    await state.clear()
+def main():
+    app = ApplicationBuilder().token("7578873168:AAEdWdH7Y252Tz4kwW_3_nbUVh0o4ArBiXY").build()
 
-# --- Выход ---
-@dp.message(F.text == "🚪 Выйти")
-async def logout(message: types.Message):
-    if message.from_user.id in STUB_DATA["sessions"]:
-        del STUB_DATA["sessions"][message.from_user.id]
-    await message.answer("✅ Вы вышли из системы", reply_markup=get_main_menu())
-
-# --- Кошелёк ---
-@dp.message(Command("wallet"))
-@dp.message(F.text == "💰 Кошелёк")
-@check_auth
-async def wallet(message: types.Message, state: FSMContext):
-    email = STUB_DATA["sessions"][message.from_user.id]
-    balance = STUB_DATA["auth_users"][email]["balance"]
-    await message.answer(
-        f"💼 Ваш кошелёк\n"
-        f"Баланс: {balance} токенов\n"
-        f"Игровой ID: {STUB_DATA['auth_users'][email]['game_id']}",
-        reply_markup=get_wallet_menu()
-    )
-    await state.set_state(MenuStates.in_wallet)
-
-# --- Пополнение баланса ---
-@dp.message(F.text == "Пополнить")
-@check_auth
-async def deposit(message: types.Message, state: FSMContext):
-    await message.answer("💵 Введите сумму для пополнения:", reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(MenuStates.waiting_for_deposit)
-
-@dp.message(MenuStates.waiting_for_deposit)
-@check_auth
-async def process_deposit(message: types.Message, state: FSMContext):
-    if not message.text.isdigit():
-        await message.answer("❌ Введите число!", reply_markup=get_wallet_menu())
-        return
-        
-    amount = int(message.text)
-    email = STUB_DATA["sessions"][message.from_user.id]
-    STUB_DATA["auth_users"][email]["balance"] += amount
-    
-    await message.answer(
-        f"✅ Баланс пополнен на {amount} токенов!\n"
-        f"💰 Текущий баланс: {STUB_DATA['auth_users'][email]['balance']}",
-        reply_markup=get_main_menu(message.from_user.id)
-    )
-    await state.clear()
-
-# --- Ставки ---
-@dp.message(Command("bets"))
-@dp.message(F.text == "🎲 Ставки")
-@check_auth
-async def bets_menu(message: types.Message, state: FSMContext):
-    await message.answer(
-        "🎲 Раздел ставок",
-        reply_markup=get_bets_menu()
-    )
-    await state.set_state(MenuStates.in_bets)
-
-@dp.message(F.text == "Создать ставку")
-@check_auth
-async def create_bet(message: types.Message, state: FSMContext):
-    email = STUB_DATA["sessions"][message.from_user.id]
-    balance = STUB_DATA["auth_users"][email]["balance"]
-    await message.answer(
-        f"💰 Ваш баланс: {balance} токенов\n"
-        "Введите сумму ставки:",
-        reply_markup=types.ReplyKeyboardRemove()
-    )
-    await state.set_state(MenuStates.waiting_for_bet_amount)
-
-@dp.message(MenuStates.waiting_for_bet_amount)
-@check_auth
-async def process_bet(message: types.Message, state: FSMContext):
-    if not message.text.isdigit():
-        await message.answer("❌ Введите число!", reply_markup=get_bets_menu())
-        return
-        
-    amount = int(message.text)
-    email = STUB_DATA["sessions"][message.from_user.id]
-    
-    if amount > STUB_DATA["auth_users"][email]["balance"]:
-        await message.answer("❌ Недостаточно средств!", reply_markup=get_bets_menu())
-        return
-        
-    STUB_DATA["auth_users"][email]["balance"] -= amount
-    bet_id = len(STUB_DATA["bets"]) + 1
-    STUB_DATA["bets"].append({
-        "id": bet_id,
-        "game_id": STUB_DATA["auth_users"][email]["game_id"],
-        "amount": amount,
-        "status": "В процессе"
-    })
-    
-    await message.answer(
-        f"✅ Ставка на {amount} токенов создана!\n"
-        f"💰 Остаток: {STUB_DATA['auth_users'][email]['balance']}",
-        reply_markup=get_main_menu(message.from_user.id)
-    )
-    await state.clear()
-
-# --- Таблица лидеров ---
-@dp.message(Command("leaderboard"))
-@dp.message(F.text == "🏆 Таблица лидеров")
-async def leaderboard(message: types.Message):
-    leaderboard_text = "🏆 Топ игроков:\n"
-    for i, player in enumerate(STUB_DATA["leaderboard"], 1):
-        leaderboard_text += f"{i}. {player['username']} - {player['score']}\n"
-    await message.answer(leaderboard_text)
-
-# --- Статистика ---
-@dp.message(Command("stats"))
-@dp.message(F.text == "📊 Моя статистика")
-@check_auth
-async def stats(message: types.Message):
-    email = STUB_DATA["sessions"][message.from_user.id]
-    user_data = STUB_DATA["auth_users"][email]
-    bets = [bet for bet in STUB_DATA["bets"] if bet["game_id"] == user_data["game_id"]]
-    
-    await message.answer(
-        f"📊 Ваша статистика:\n"
-        f"• Токены: {user_data['balance']}\n"
-        f"• Рекорд: {user_data['best_score']} м\n"
-        f"• Ставок: {len(bets)}\n"
-        f"• Активные ставки: {len([b for b in bets if b['status'] == 'В процессе'])}",
-        reply_markup=get_main_menu(message.from_user.id)
+    conv = ConversationHandler(
+        entry_points=[CommandHandler("login", login_command)],
+        states={
+            ASK_EMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, ask_password)],
+            ASK_PASSWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, do_login)],
+        },
+        fallbacks=[]
     )
 
-# --- Назад ---
-@dp.message(F.text == "🔙 Назад")
-async def back(message: types.Message, state: FSMContext):
-    await state.clear()
-    await message.answer("Главное меню:", reply_markup=get_main_menu(message.from_user.id))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(conv)
+    app.add_handler(CommandHandler("logout", logout))
+    app.add_handler(CommandHandler("leaders", leaders))
+    app.add_handler(CommandHandler("points", points))
+    app.add_handler(CommandHandler("transactions", transactions))
+    app.add_error_handler(handle_error)
 
-# --- Запуск ---
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == '__main__':
-    import asyncio
-    asyncio.run(main())
+    app.run_polling()
+if __name__ == "__main__":
+    main()
