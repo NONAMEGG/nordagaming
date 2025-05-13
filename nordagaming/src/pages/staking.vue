@@ -1,6 +1,13 @@
 <template>
   <v-container class="main_window" fluid>
-    <v-card class="mb-6 pa-4">
+    <v-row justify="center">
+      <v-col cols="12" md="6" class="d-flex justify-center">
+      <CountDown :end-time="bettingEndTime" />
+      </v-col>
+    </v-row>
+
+    <v-card class="mt-6 mb-6 pa-4">
+      
       <v-row>
         <v-col cols="12" md="6">
           <v-list dense>
@@ -82,11 +89,10 @@
       </v-row>
     </v-card>
     <v-row align="center">
-      <v-col cols="12" md="6">
-        <GetBets />
-      </v-col>
-      <v-col cols="12" md="6">
-        <CountDown :end-time="bettingEndTime" />
+      <v-col cols="12">
+        <div style="max-height: 400px; overflow-y: auto;">
+          <GetBets />
+        </div>
       </v-col>
     </v-row>
   </v-container>

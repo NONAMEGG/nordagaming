@@ -1,57 +1,90 @@
 <template>
-    <div 
-      v-for="(bet, index) in bets" 
-      :key="index" 
-      class="bid_item"
-      :class="{ 'winner-bet': isWinner(bet.player) }"
-    >
-      <div class="player_id">
-        <span class="font-bold text-lg text-gray-800">Игрок: </span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ bet.player }}</span>
-      </div>
-      <div class="player_bid_amount">
-        <span class="font-bold text-lg text-gray-800">Сумма ставки:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ formatEth(bet.amount) }} ETH</span>
-      </div>
-      <div class="player_odds">
-        <span class="font-bold text-lg text-gray-800">Шанс на победу:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculateWinChance(bet.amount) }}%</span>
-      </div>
-      <div class="potential_win">
-        <span class="font-bold text-lg text-gray-800">Потенциальный выигрыш:</span>
-        <span :class="isWinner(bet.player) ? 'text-green-500' : 'text-gray-600'">{{ calculatePotentialWin(bet.amount) }} ETH</span>
-      </div>
-    </div>
-
-          <v-divider class="my-6"></v-divider>
-          <v-alert v-if="bets.length === 0" type="info" class="mb-4">
-            Ставки ещё не сделаны.
-          </v-alert>
-
-    <div v-if="currentGameId !== null" class="text-lg text-gray-500 mt-4">
-      Текущий ID игры: {{ currentGameId }}
-    </div>
-
-    <div v-if="totalAmount !== null" class="text-lg text-gray-500 mt-4">
-      Общая сумма ставок: {{ formatEth(totalAmount) }} ETH
-    </div>
-
-    <div 
-      v-if="winner && winner !== '0x0000000000000000000000000000000000000000'" 
-      class="winner-announcement mt-6 p-4 bg-green-100 rounded-lg"
-    >
-      <h2 class="text-2xl font-bold text-green-800">Победитель игры #{{ currentGameId }}:</h2>
-      <p class="text-xl text-green-600">{{ winner }}</p>
-      <p class="text-lg text-green-600">Выигрыш: {{ formatEth(winningAmount) }} ETH</p>
-      
-      <button 
-        @click="startNewGame"
-        class="button-primary mt-4"
-        :disabled="!canStartNewGame"
+  <v-container>
+    <v-row>
+      <v-col
+        v-for="(bet, index) in bets"
+        :key="index"
+        cols="12"
+        class="py-1"
       >
-        Начать новую игру
-      </button>
-    </div>
+        <v-card
+          class="mb-2 py-2 px-3"
+          :class="{ 'winner-bet': isWinner(bet.player) }"
+          color="grey-darken-4"
+          elevation="2"
+          style="min-height:unset;"
+        >
+          <v-card-text class="py-2 px-0">
+            <v-row dense align="center">
+              <v-col cols="12" md="3" class="py-1">
+                <div class="font-weight-bold">Игрок:</div>
+                <div :class="isWinner(bet.player) ? 'text-green' : 'text-grey'">
+                  {{ bet.player }}
+                </div>
+              </v-col>
+              <v-col cols="12" md="3" class="py-1">
+                <div class="font-weight-bold">Сумма ставки:</div>
+                <div :class="isWinner(bet.player) ? 'text-green' : 'text-grey'">
+                  {{ formatEth(bet.amount) }} ETH
+                </div>
+              </v-col>
+              <v-col cols="12" md="3" class="py-1">
+                <div class="font-weight-bold">Шанс на победу:</div>
+                <div :class="isWinner(bet.player) ? 'text-green' : 'text-grey'">
+                  {{ calculateWinChance(bet.amount) }}%
+                </div>
+              </v-col>
+              <v-col cols="12" md="3" class="py-1">
+                <div class="font-weight-bold">Потенциальный выигрыш:</div>
+                <div :class="isWinner(bet.player) ? 'text-green' : 'text-grey'">
+                  {{ calculatePotentialWin(bet.amount) }} ETH
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-divider class="my-6"></v-divider>
+
+    <v-alert v-if="bets.length === 0" type="info" class="mb-4">
+      Ставки ещё не сделаны.
+    </v-alert>
+
+    <v-row>
+      <v-col cols="12" v-if="currentGameId !== null">
+        <v-chip color="primary" class="ma-2">
+          Текущий ID игры: {{ currentGameId }}
+        </v-chip>
+      </v-col>
+      <v-col cols="12" v-if="totalAmount !== null">
+        <v-chip color="secondary" class="ma-2">
+          Общая сумма ставок: {{ formatEth(totalAmount) }} ETH
+        </v-chip>
+      </v-col>
+    </v-row>
+
+    <v-row v-if="winner && winner !== '0x0000000000000000000000000000000000000000'">
+      <v-col cols="12">
+        <v-alert type="success" class="winner-announcement mt-6">
+          <div>
+            <h2 class="text-h5 font-weight-bold mb-2">Победитель игры #{{ currentGameId }}:</h2>
+            <p class="text-subtitle-1 mb-1">{{ winner }}</p>
+            <p class="text-subtitle-2 mb-2">Выигрыш: {{ formatEth(winningAmount) }} ETH</p>
+            <v-btn
+              color="primary"
+              class="mt-2"
+              :disabled="!canStartNewGame"
+              @click="startNewGame"
+            >
+              Начать новую игру
+            </v-btn>
+          </div>
+        </v-alert>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
