@@ -1,0 +1,33 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+// https://vuetifyjs.com/features/sass-variables/`
+// @use 'vuetify/settings' with (
+//   $color-pack: false
+// );
+
+
+.main_window{
+    border: 1px solid white;
+    margin: 1.5%;
+    text-align: center;
+    min-width: 75%;
+}
+
+.bid_item{
+    border: 1px solid gray;
+    margin: 10px;
+    display: flex;
+    flex-direction: row;
+}
+
+.bid_item div{
+    margin-left: 10px;
+}
+
+.bids_main_container{
+    border: 1px solid white;
+}
